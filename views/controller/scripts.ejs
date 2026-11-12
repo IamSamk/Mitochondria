@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Answer Scripts</h1>
+    <p class="text-muted mb-0">Upload, verify, hold and allocate scanned answer scripts.</p>
+  </div>
+  <a class="btn btn-primary" href="/controller/scripts/new">Upload script</a>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/controller/scripts">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="examId">
+      <option value="">All examinations</option>
+      <% exams.forEach(function (e) { %><option value="<%= e.id %>" <%= String(filters.examId) === String(e.id) ? 'selected' : '' %>><%= e.course_code %> — <%= e.name %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="status">
+      <option value="">All statuses</option>
+      <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s.replaceAll('_', ' ') %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Student</th><th>Exam</th><th>Set</th><th>Status</th><th>Pages</th><th>Evaluator</th><th>Evaluation</th><th></th></tr></thead>
+      <tbody>
+      <% scripts.forEach(function (s) { %>
+        <tr>
+          <td><div class="fw-semibold"><%= s.student_code %></div><div class="small text-muted"><%= s.student_name %></div></td>
+          <td><div><%= s.exam_name %></div><div class="small text-muted"><%= s.course_code %> &middot; <%= String(s.exam_date).slice(0, 10) %></div></td>
+          <td><%= s.set_code ? 'Set ' + s.set_code : '—' %></td>
+          <td>
+            <% const tone = { UPLOADED: 'secondary', PENDING_VERIFICATION: 'warning', VERIFIED: 'info', ALLOCATED: 'primary', UNDER_EVALUATION: 'warning', EVALUATED: 'success', MARKS_SUBMITTED: 'success', ON_HOLD: 'danger' }[s.status] || 'secondary'; %>
+            <span class="badge text-bg-<%= tone %>"><%= s.status.replaceAll('_', ' ') %></span>
+          </td>
+          <td><%= s.page_count %><%= s.expected_pages ? ' / ' + s.expected_pages : '' %><% if (!s.is_complete) { %> <span class="badge text-bg-warning">incomplete</span><% } %></td>
+          <td><%= s.faculty_name || '—' %></td>
+          <td><%= s.evaluation_status ? s.evaluation_status.replaceAll('_', ' ') : '—' %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/controller/scripts/<%= s.id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!scripts.length) { %><tr><td colspan="8" class="text-center text-muted py-4">No answer scripts match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

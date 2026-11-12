@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Audit Log</h1>
+    <p class="text-muted mb-0">Every sensitive action is recorded. <%= total %> matching entries.</p>
+  </div>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/admin/audit">
+  <div class="col-md-2"><input class="form-control" name="action" value="<%= filters.action %>" placeholder="Action"></div>
+  <div class="col-md-2">
+    <select class="form-select" name="entityType">
+      <option value="">All entities</option>
+      <% ['user','department','course','examination','question','question_paper','paper_version','answer_script','evaluation','marks'].forEach(function (t) { %>
+        <option value="<%= t %>" <%= filters.entityType === t ? 'selected' : '' %>><%= t %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-2"><input class="form-control" name="actor" value="<%= filters.actor %>" placeholder="Actor email"></div>
+  <div class="col-md-2"><input class="form-control" name="from" type="date" value="<%= filters.from %>"></div>
+  <div class="col-md-2"><input class="form-control" name="to" type="date" value="<%= filters.to %>"></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Time (UTC)</th><th>Actor</th><th>Action</th><th>Entity</th><th>IP</th><th>Metadata</th></tr></thead>
+      <tbody>
+      <% logs.forEach(function (l) { %>
+        <tr>
+          <td class="text-nowrap small"><%= new Date(l.created_at).toISOString().slice(0, 19).replace('T', ' ') %></td>
+          <td class="small"><%= l.actor_email || 'system' %></td>
+          <td><span class="badge text-bg-secondary"><%= l.action %></span></td>
+          <td class="small"><%= l.entity_type || '—' %><%= l.entity_id ? ' #' + l.entity_id : '' %></td>
+          <td class="small text-muted"><%= l.ip_address || '—' %></td>
+          <td class="small"><code class="text-break"><%= JSON.stringify(l.metadata) %></code></td>
+        </tr>
+      <% }); %>
+      <% if (!logs.length) { %><tr><td colspan="6" class="text-center text-muted py-4">No audit entries match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% if (pages > 1) { %>
+<nav class="mt-3"><ul class="pagination">
+  <% for (let p = 1; p <= pages; p++) { %>
+    <li class="page-item <%= p === page ? 'active' : '' %>"><a class="page-link" href="/admin/audit?page=<%= p %>&action=<%= encodeURIComponent(filters.action) %>&entityType=<%= encodeURIComponent(filters.entityType) %>&actor=<%= encodeURIComponent(filters.actor) %>&from=<%= filters.from %>&to=<%= filters.to %>"><%= p %></a></li>
+  <% } %>
+</ul></nav>
+<% } %>
+<%- include('../partials/footer') %>

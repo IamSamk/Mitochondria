@@ -1,0 +1,98 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/evaluations">My Evaluations</a></li><li class="breadcrumb-item active"><%= evaluation.student_code %></li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= evaluation.student_code %> — <%= evaluation.student_name %></h1>
+    <p class="text-muted mb-0"><%= evaluation.exam_name %> &middot; <%= evaluation.course_code %> &middot; <%= evaluation.set_code ? 'Set ' + evaluation.set_code : 'No set' %> &middot; out of <%= Number(evaluation.max_marks) %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/faculty/evaluations">Back</a>
+    <a class="btn btn-primary" href="/faculty/evaluations/<%= evaluation.id %>/script">Open script PDF</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Status</div><div class="fs-5"><span class="badge text-bg-info"><%= evaluation.status %></span></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Current total</div><div class="display-6"><%= Number(evaluation.total_marks) %></div><div class="small text-muted">out of <%= Number(evaluation.max_marks) %></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Questions</div><div class="display-6"><%= questions.length %></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Submitted</div><div class="fs-5 small"><%= evaluation.submitted_at ? new Date(evaluation.submitted_at).toISOString().slice(0, 16).replace('T', ' ') : 'Not yet' %></div></div></div></div>
+</div>
+
+<% if (readOnly) { %>
+  <div class="alert alert-info">These marks are <%= evaluation.status.replaceAll('_', ' ').toLowerCase() %> and read-only. The verifier or controller must reopen them before you can edit.</div>
+<% } else if (evaluation.status === 'REOPENED') { %>
+  <div class="alert alert-warning">Marks were sent back for correction. Review the history below, update the marks and resubmit.</div>
+<% } %>
+
+<% if (!version) { %>
+  <div class="alert alert-danger">No paper version is available for this script's set. Ask the controller to check the paper set.</div>
+<% } else { %>
+<div class="card mb-3">
+  <div class="card-header fw-semibold">Mark sheet — version <%= version.version_no %></div>
+  <form method="post" action="/faculty/evaluations/<%= evaluation.id %>/draft">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>No.</th><th>Question</th><th>Max</th><th style="width: 130px">Marks</th><th style="width: 240px">Comment</th></tr></thead>
+        <tbody>
+        <% questions.forEach(function (q) { const m = marksByQuestion[q.id]; %>
+          <tr>
+            <td class="text-nowrap"><%= q.display_no %></td>
+            <td>
+              <%= q.body %>
+              <% if (Array.isArray(q.options_json) && q.options_json.length) { %>
+                <div class="small text-muted mt-1"><% q.options_json.forEach(function (o) { %><div><%= o.label %>. <%= o.body %></div><% }); %></div>
+              <% } %>
+            </td>
+            <td><%= Number(q.marks) %></td>
+            <td>
+              <input class="form-control form-control-sm" type="number" step="0.01" min="0" max="<%= Number(q.marks) %>"
+                name="mark_<%= q.id %>" value="<%= m && m.marks_awarded !== null ? Number(m.marks_awarded) : '' %>" <%= readOnly ? 'disabled' : '' %>>
+            </td>
+            <td>
+              <input class="form-control form-control-sm" name="comment_<%= q.id %>" maxlength="500"
+                value="<%= m && m.comment ? m.comment : '' %>" <%= readOnly ? 'disabled' : '' %>>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!questions.length) { %><tr><td colspan="5" class="text-center text-muted py-4">No questions are available in this version.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-body border-top">
+      <div class="mb-3">
+        <label class="form-label" for="remarks">Overall remarks</label>
+        <textarea class="form-control" id="remarks" name="remarks" rows="3" maxlength="2000" <%= readOnly ? 'disabled' : '' %>><%= evaluation.remarks || '' %></textarea>
+      </div>
+      <% if (!readOnly && questions.length) { %>
+        <button class="btn btn-outline-primary" type="submit">Save draft</button>
+        <button class="btn btn-success" type="submit" formaction="/faculty/evaluations/<%= evaluation.id %>/submit">Submit for verification</button>
+      <% } %>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="card-header fw-semibold">Marks history</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Reason</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+      <% history.forEach(function (h) { %>
+        <tr>
+          <td class="text-nowrap"><%= new Date(h.created_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+          <td><%= h.action %></td>
+          <td><%= h.actor_name %></td>
+          <td class="small"><%= h.reason || '—' %></td>
+          <td><%= h.total_before !== null ? Number(h.total_before) : '—' %></td>
+          <td><%= h.total_after !== null ? Number(h.total_after) : '—' %></td>
+        </tr>
+      <% }); %>
+      <% if (!history.length) { %><tr><td colspan="6" class="text-center text-muted py-3">No submissions yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

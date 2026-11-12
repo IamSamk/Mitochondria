@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Results</h1>
+    <p class="text-muted mb-0">Finalized marks only. Reopen a finalized evaluation from the marks page to correct it.</p>
+  </div>
+  <% const qs = new URLSearchParams(); if (filters.examId) qs.set('examId', filters.examId); if (filters.courseId) qs.set('courseId', filters.courseId); if (filters.q) qs.set('q', filters.q); %>
+  <a class="btn btn-primary" href="/controller/results/export.csv?<%= qs.toString() %>">Export CSV</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Finalized scripts</div><div class="display-6"><%= summary.attempts %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Average</div><div class="display-6"><%= summary.average %></div><div class="small text-muted">out of <%= summary.maxMarks %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Highest</div><div class="display-6"><%= summary.highest %></div></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Lowest</div><div class="display-6"><%= summary.lowest %></div></div></div></div>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/controller/results">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="examId">
+      <option value="">All examinations</option>
+      <% options.exams.forEach(function (e) { %><option value="<%= e.id %>" <%= String(filters.examId) === String(e.id) ? 'selected' : '' %>><%= e.name %> (<%= String(e.exam_date).slice(0, 10) %>)</option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="courseId">
+      <option value="">All courses</option>
+      <% options.courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Student</th><th>Exam</th><th>Course</th><th>Set</th><th>Marks</th><th>%</th><th>Evaluator</th><th>Submitted</th><th></th></tr></thead>
+      <tbody>
+      <% rows.forEach(function (r) { const marks = Number(r.total_marks); const max = Number(r.max_marks); %>
+        <tr>
+          <td><div class="fw-semibold"><%= r.student_code %></div><div class="small text-muted"><%= r.student_name %></div></td>
+          <td><%= r.exam_name %></td>
+          <td><%= r.course_code %></td>
+          <td><%= r.set_code ? 'Set ' + r.set_code : '—' %></td>
+          <td class="fw-semibold"><%= marks %> / <%= max %></td>
+          <td><%= max ? ((marks / max) * 100).toFixed(1) : '0.0' %>%</td>
+          <td><%= r.evaluator_name %></td>
+          <td class="text-nowrap small"><%= r.submitted_at ? new Date(r.submitted_at).toISOString().slice(0, 16).replace('T', ' ') : '—' %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/controller/marks/<%= r.evaluation_id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No finalized results yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

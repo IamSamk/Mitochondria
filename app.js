@@ -5,6 +5,8 @@ const helmet = require('helmet');
 const { query, isConfigured } = require('./config/database');
 const sessionMiddleware = require('./config/session');
 const { csrfToken, csrfProtect } = require('./middleware/csrf.middleware');
+const { flash } = require('./middleware/flash.middleware');
+const { requestLogger } = require('./middleware/request-logger.middleware');
 const { NAV } = require('./config/navigation');
 
 const app = express();
@@ -64,7 +66,9 @@ if (setupProblems.length) {
 }
 
 app.use(sessionMiddleware);
+app.use(requestLogger);
 app.use(csrfToken);
+app.use(flash);
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.nav = req.session.user ? NAV[req.session.user.role] || [] : [];
@@ -77,6 +81,20 @@ app.use(csrfProtect);
 // Module route registration -- each module exports an Express router.
 app.use('/', require('./modules/auth/auth.routes'));
 app.use('/', require('./modules/dashboard.routes'));
+app.use('/admin/users', require('./modules/users/users.routes'));
+app.use('/admin/academics', require('./modules/academics/academics.routes'));
+app.use('/admin/audit', require('./modules/audit/audit.routes'));
+app.use('/controller/exams', require('./modules/examinations/examinations.routes'));
+app.use('/controller/papers', require('./modules/question-papers/controller.routes'));
+app.use('/controller/scripts', require('./modules/answer-scripts/answer-scripts.routes'));
+app.use('/controller/marks', require('./modules/evaluations/controller.routes'));
+app.use('/controller/results', require('./modules/results/results.routes'));
+app.use('/faculty/questions', require('./modules/questions/questions.routes'));
+app.use('/faculty/papers', require('./modules/question-papers/faculty.routes'));
+app.use('/faculty/evaluations', require('./modules/evaluations/faculty.routes'));
+app.use('/reviewer/papers', require('./modules/approvals/approvals.routes'));
+app.use('/printing/papers', require('./modules/printing/printing.routes'));
+app.use('/verifier/marks', require('./modules/evaluations/verifier.routes'));
 
 // 404
 app.use((req, res) => res.status(404).render('errors/error', { status: 404, message: 'Page not found' }));
@@ -84,6 +102,11 @@ app.use((req, res) => res.status(404).render('errors/error', { status: 404, mess
 // Central error handler: no stack traces to clients in production.
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  if (err.name === 'MulterError') {
+    err.status = 422;
+    err.code = err.code || 'UPLOAD_ERROR';
+    err.message = err.code === 'LIMIT_FILE_SIZE' ? 'That file is larger than the upload limit' : 'Upload failed';
+  }
   const status = err.status || 500;
   const message = status >= 500 ? 'Something went wrong' : err.message;
   if (status >= 500 && process.env.NODE_ENV !== 'test') console.error(err);

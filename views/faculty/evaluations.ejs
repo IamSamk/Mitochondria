@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">My Evaluations</h1>
+    <p class="text-muted mb-0">Scripts currently allocated to you. Enter marks question by question.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <% const cards = [
+    ['Not started', counts.NOT_STARTED || 0, 'secondary'],
+    ['Draft / reopened', (counts.DRAFT || 0) + (counts.REOPENED || 0), 'warning'],
+    ['Submitted', (counts.SUBMITTED || 0) + (counts.VERIFIED || 0) + (counts.FINALIZED || 0), 'success']
+  ]; %>
+  <% cards.forEach(function (card) { %>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small"><%= card[0] %></div><div class="display-6"><%= card[1] %></div></div></div></div>
+  <% }); %>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Student</th><th>Exam</th><th>Course</th><th>Set</th><th>Script</th><th>Evaluation</th><th>Marks</th><th></th></tr></thead>
+      <tbody>
+      <% queue.forEach(function (row) { %>
+        <tr>
+          <td><div class="fw-semibold"><%= row.student_code %></div><div class="small text-muted"><%= row.student_name %></div></td>
+          <td><div><%= row.exam_name %></div><div class="small text-muted"><%= String(row.exam_date).slice(0, 10) %></div></td>
+          <td><%= row.course_code %></td>
+          <td><%= row.set_code ? 'Set ' + row.set_code : '—' %></td>
+          <td><%= row.page_count %> page(s)</td>
+          <td>
+            <% if (row.evaluation_status) { %>
+              <% const tone = { DRAFT: 'warning', SUBMITTED: 'info', VERIFIED: 'primary', FINALIZED: 'success', REOPENED: 'danger' }[row.evaluation_status] || 'secondary'; %>
+              <span class="badge text-bg-<%= tone %>"><%= row.evaluation_status.replaceAll('_', ' ') %></span>
+            <% } else { %><span class="badge text-bg-secondary">Not started</span><% } %>
+          </td>
+          <td><%= row.evaluation_marks !== null && row.evaluation_marks !== undefined ? Number(row.evaluation_marks) : '—' %> / <%= Number(row.max_marks) %></td>
+          <td class="text-end text-nowrap">
+            <% if (!row.evaluation_id) { %>
+              <form method="post" action="/faculty/evaluations/scripts/<%= row.script_id %>/start">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm btn-primary" type="submit">Start evaluation</button>
+              </form>
+            <% } else { %>
+              <a class="btn btn-sm btn-outline-secondary" href="/faculty/evaluations/<%= row.evaluation_id %>/script">Script</a>
+              <a class="btn btn-sm btn-primary" href="/faculty/evaluations/<%= row.evaluation_id %>"><%= ['DRAFT', 'REOPENED'].includes(row.evaluation_status) ? 'Continue' : 'View' %></a>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!queue.length) { %><tr><td colspan="8" class="text-center text-muted py-4">Nothing allocated to you yet. The controller allocates verified scripts.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

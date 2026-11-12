@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Paper Releases</h1>
+    <p class="text-muted mb-0">Approved papers can be released once, then downloaded by the printing coordinator.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/controller/exams">Examinations</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Approved papers awaiting release</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Version</th><th>Marks</th><th>Approved</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      <% pending.forEach(function (p) { %>
+        <tr>
+          <td class="fw-semibold"><%= p.exam_name %></td>
+          <td><%= p.course_code %></td>
+          <td><span class="badge text-bg-dark">Set <%= p.set_code %></span></td>
+          <td>v<%= p.version_no %></td>
+          <td><%= Number(p.total_marks) %> / <%= Number(p.max_marks) %></td>
+          <td class="text-nowrap"><%= p.released_at ? new Date(p.released_at).toISOString().slice(0, 10) : '—' %></td>
+          <td class="text-end">
+            <div class="d-flex gap-2 justify-content-end align-items-center">
+              <a class="btn btn-sm btn-outline-secondary" href="/controller/papers/<%= p.version_id %>/download">PDF</a>
+              <form class="d-flex gap-1" method="post" action="/controller/papers/<%= p.version_id %>/release">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input class="form-control form-control-sm" name="note" placeholder="Optional note" maxlength="500">
+                <button class="btn btn-sm btn-primary text-nowrap" type="submit">Release</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!pending.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No approved papers are waiting for release.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Released for printing</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Marks</th><th>Released</th><th>By</th><th>Note</th><th></th></tr></thead>
+      <tbody>
+      <% released.forEach(function (p) { %>
+        <tr>
+          <td class="fw-semibold"><%= p.exam_name %></td>
+          <td><%= p.course_code %></td>
+          <td><span class="badge text-bg-dark">Set <%= p.set_code %></span> v<%= p.version_no %></td>
+          <td><%= Number(p.total_marks) %> / <%= Number(p.max_marks) %></td>
+          <td class="text-nowrap"><%= new Date(p.released_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+          <td><%= p.released_by %></td>
+          <td class="small"><%= p.note || '—' %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/controller/papers/<%= p.id %>/download">Download</a></td>
+        </tr>
+      <% }); %>
+      <% if (!released.length) { %><tr><td colspan="8" class="text-center text-muted py-4">No papers have been released yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

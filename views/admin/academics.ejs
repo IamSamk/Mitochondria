@@ -1,0 +1,124 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Departments &amp; Courses</h1>
+    <p class="text-muted mb-0">Organise the academic structure and assign faculty to courses.</p>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Departments</div>
+  <div class="card-body">
+    <form class="row g-2 mb-3" method="post" action="/admin/academics/departments">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required></div>
+      <div class="col-md-8"><input class="form-control" name="name" placeholder="Department name" maxlength="120" required></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+    </form>
+    <% departments.forEach(function (d) { %><form id="dept-<%= d.id %>" method="post" action="/admin/academics/departments/<%= d.id %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form><% }); %>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th style="width:110px">Code</th><th>Name</th><th style="width:90px">Courses</th><th style="width:90px">Active</th><th style="width:90px"></th></tr></thead>
+        <tbody>
+        <% departments.forEach(function (d) { %>
+          <tr>
+            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="code" value="<%= d.code %>" required></td>
+            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="name" value="<%= d.name %>" required></td>
+            <td><%= d.course_count %></td>
+            <td><input class="form-check-input" type="checkbox" form="dept-<%= d.id %>" name="isActive" value="true" <%= d.is_active ? 'checked' : '' %>></td>
+            <td><button class="btn btn-sm btn-outline-secondary" form="dept-<%= d.id %>" type="submit">Save</button></td>
+          </tr>
+        <% }); %>
+        <% if (!departments.length) { %><tr><td colspan="5" class="text-center text-muted py-3">No departments yet.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Courses</div>
+  <div class="card-body">
+    <form class="row g-2 mb-3" method="post" action="/admin/academics/courses">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-3">
+        <select class="form-select" name="departmentId" required>
+          <option value="">Department</option>
+          <% departments.filter(function (d) { return d.is_active; }).forEach(function (d) { %><option value="<%= d.id %>"><%= d.code %></option><% }); %>
+        </select>
+      </div>
+      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required></div>
+      <div class="col-md-4"><input class="form-control" name="title" placeholder="Course title" maxlength="160" required></div>
+      <div class="col-md-1"><input class="form-control" name="credits" type="number" min="1" max="12" placeholder="Cr"></div>
+      <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+    </form>
+    <% courses.forEach(function (c) { %><form id="course-<%= c.id %>" method="post" action="/admin/academics/courses/<%= c.id %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form><% }); %>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th style="width:150px">Department</th><th style="width:100px">Code</th><th>Title</th><th style="width:70px">Credits</th><th style="width:90px">Faculty</th><th style="width:80px">Active</th><th style="width:80px"></th></tr></thead>
+        <tbody>
+        <% courses.forEach(function (c) { %>
+          <tr>
+            <td>
+              <select class="form-select form-select-sm" form="course-<%= c.id %>" name="departmentId" required>
+                <% departments.forEach(function (d) { %><option value="<%= d.id %>" <%= d.id === c.department_id ? 'selected' : '' %>><%= d.code %></option><% }); %>
+              </select>
+            </td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="code" value="<%= c.code %>" required></td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="title" value="<%= c.title %>" required></td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="credits" type="number" min="1" max="12" value="<%= c.credits || '' %>"></td>
+            <td><%= c.faculty_count %></td>
+            <td><input class="form-check-input" type="checkbox" form="course-<%= c.id %>" name="isActive" value="true" <%= c.is_active ? 'checked' : '' %>></td>
+            <td><button class="btn btn-sm btn-outline-secondary" form="course-<%= c.id %>" type="submit">Save</button></td>
+          </tr>
+        <% }); %>
+        <% if (!courses.length) { %><tr><td colspan="7" class="text-center text-muted py-3">No courses yet.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Faculty–Course Assignments</div>
+  <div class="card-body">
+    <form class="row g-2 mb-3" method="post" action="/admin/academics/assignments">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-5">
+        <select class="form-select" name="facultyId" required>
+          <option value="">Faculty member</option>
+          <% faculty.forEach(function (f) { %><option value="<%= f.id %>"><%= f.full_name %> (<%= f.email %>)</option><% }); %>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <select class="form-select" name="courseId" required>
+          <option value="">Course</option>
+          <% courses.filter(function (c) { return c.is_active; }).forEach(function (c) { %><option value="<%= c.id %>"><%= c.code %> — <%= c.title %></option><% }); %>
+        </select>
+      </div>
+      <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Assign</button></div>
+    </form>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Faculty</th><th>Course</th><th>Assigned</th><th></th></tr></thead>
+        <tbody>
+        <% assignments.forEach(function (a) { %>
+          <tr>
+            <td><%= a.full_name %> <span class="text-muted small">(<%= a.email %>)</span></td>
+            <td><%= a.course_code %> — <%= a.course_title %></td>
+            <td class="text-muted small"><%= new Date(a.assigned_at).toISOString().slice(0, 10) %></td>
+            <td class="text-end">
+              <form method="post" action="/admin/academics/assignments/<%= a.id %>/delete">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!assignments.length) { %><tr><td colspan="4" class="text-center text-muted py-3">No assignments yet.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

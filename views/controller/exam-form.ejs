@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/controller/exams">Examinations</a></li><li class="breadcrumb-item active"><%= mode === 'create' ? 'New' : 'Edit' %></li></ol></nav>
+<h1 class="h3 mb-3"><%= mode === 'create' ? 'New examination' : 'Edit examination' %></h1>
+<div class="card" style="max-width: 900px">
+  <div class="card-body">
+    <form method="post" action="<%= mode === 'create' ? '/controller/exams' : '/controller/exams/' + exam.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="courseId">Course</label>
+          <select class="form-select" id="courseId" name="courseId" required>
+            <option value="">Select course</option>
+            <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(form.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="name">Examination name</label>
+          <input class="form-control" id="name" name="name" value="<%= form.name || '' %>" maxlength="160" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="examType">Type</label>
+          <select class="form-select" id="examType" name="examType" required>
+            <% examTypes.forEach(function (t) { %><option value="<%= t %>" <%= form.examType === t ? 'selected' : '' %>><%= t.charAt(0) + t.slice(1).toLowerCase() %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="examDate">Exam date</label>
+          <input class="form-control" id="examDate" name="examDate" type="date" value="<%= form.examDate || '' %>" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" for="durationMinutes">Duration (min)</label>
+          <input class="form-control" id="durationMinutes" name="durationMinutes" type="number" min="10" max="600" value="<%= form.durationMinutes || 180 %>" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" for="maxMarks">Max marks</label>
+          <input class="form-control" id="maxMarks" name="maxMarks" type="number" min="1" max="9999" step="0.01" value="<%= form.maxMarks || 100 %>" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="paperDeadline">Paper submission deadline</label>
+          <input class="form-control" id="paperDeadline" name="paperDeadline" type="datetime-local" value="<%= form.paperDeadline || '' %>">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="evaluationDeadline">Evaluation deadline</label>
+          <input class="form-control" id="evaluationDeadline" name="evaluationDeadline" type="datetime-local" value="<%= form.evaluationDeadline || '' %>">
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="instructions">Instructions</label>
+          <textarea class="form-control" id="instructions" name="instructions" rows="4" maxlength="5000"><%= form.instructions || '' %></textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><%= mode === 'create' ? 'Create examination' : 'Save changes' %></button>
+        <a class="btn btn-outline-secondary" href="<%= mode === 'create' ? '/controller/exams' : '/controller/exams/' + exam.id %>">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

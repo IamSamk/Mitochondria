@@ -5,6 +5,18 @@ Modular monolith: Node.js + Express 5, EJS, Bootstrap 5, **PostgreSQL**, **pnpm*
 
 > Stack change vs. the original brief: PostgreSQL (`pg`, `connect-pg-simple`) replaces MySQL; pnpm replaces npm.
 
+## What is implemented
+Every sidebar page is a real, database-backed workflow (no mock screens):
+
+- **Admin** — user accounts and roles, departments, courses, faculty-course assignments, filterable audit log.
+- **Controller** — create/edit examinations and advance their lifecycle; monitor approved papers and release them for printing; upload answer-script PDFs with page-count validation, hold/verify/reallocate them; finalize verified marks; view results and export CSV.
+- **Faculty** — question bank for assigned courses (MCQ/short/descriptive with answer keys), multi-set paper builder with mark-total validation, PDF generation on submission, revisions after rejection, per-question evaluation of allocated scripts with drafts and correction cycles.
+- **Reviewer** — submitted-paper queue, paper detail, approve/reject with comments, PDF download.
+- **Printing Coordinator** — released-paper queue and PDF downloads only.
+- **Marks Verifier** — submitted-marks queue, verify or send back with a reason, download scripts, read finalized results.
+
+Uploaded scripts and generated papers live outside the web root and are only served through authorized, role-checked download routes. Every form is CSRF-protected and every route enforces RBAC server-side.
+
 ## Prerequisites (Windows)
 - Node.js 22+ (`node -v`)
 - pnpm 10+ (`npm i -g pnpm`)

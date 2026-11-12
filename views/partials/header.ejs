@@ -14,7 +14,7 @@
     <div class="brand mb-4">Exam Management</div>
     <ul class="nav flex-column">
       <% nav.forEach(function (item) { %>
-        <li class="nav-item"><a class="nav-link <%= currentPath === item[1] ? 'active' : '' %>" href="<%= item[1] %>"><%= item[0] %></a></li>
+        <li class="nav-item"><a class="nav-link <%= (currentPath === item[1] || currentPath.startsWith(item[1] + '/')) ? 'active' : '' %>" href="<%= item[1] %>"><%= item[0] %></a></li>
       <% }) %>
     </ul>
   </nav>
@@ -27,6 +27,8 @@
       </form>
     </header>
     <main class="p-4">
+      <%- include('alerts') %>
 <% } else { %>
 <main class="container py-5">
+  <%- include('alerts') %>
 <% } %>

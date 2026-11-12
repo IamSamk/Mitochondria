@@ -1,0 +1,123 @@
+<%- include('../partials/header') %>
+<% const base = mode === 'verifier' ? '/verifier/marks' : '/controller/marks'; %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<%= base %>"><%= mode === 'verifier' ? 'Marks to Verify' : 'Marks' %></a></li><li class="breadcrumb-item active"><%= evaluation.student_code %></li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= evaluation.student_code %> — <%= evaluation.student_name %></h1>
+    <p class="text-muted mb-0"><%= evaluation.exam_name %> &middot; <%= evaluation.course_code %> &middot; <%= evaluation.set_code ? 'Set ' + evaluation.set_code : 'No set' %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="<%= base %>">Back</a>
+    <a class="btn btn-primary" href="<%= base %>/<%= evaluation.id %>/script">Open script PDF</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Status</div><div class="fs-5"><span class="badge text-bg-info"><%= evaluation.status.replaceAll('_', ' ') %></span></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Total</div><div class="display-6"><%= Number(evaluation.total_marks) %></div><div class="small text-muted">out of <%= Number(evaluation.max_marks) %></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Evaluator</div><div class="fs-6"><%= evaluation.evaluator_name %></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Submitted</div><div class="fs-6 small"><%= evaluation.submitted_at ? new Date(evaluation.submitted_at).toISOString().slice(0, 16).replace('T', ' ') : '—' %></div></div></div></div>
+</div>
+
+<% if (mode === 'verifier') { %>
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Verification actions</div>
+    <div class="card-body">
+      <% if (evaluation.status === 'SUBMITTED') { %>
+        <form class="d-inline" method="post" action="/verifier/marks/<%= evaluation.id %>/verify">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-success" type="submit">Verify marks</button>
+        </form>
+      <% } else { %>
+        <p class="text-muted small mb-2">Verification is available only for submitted marks.</p>
+      <% } %>
+      <% if (['SUBMITTED', 'VERIFIED'].includes(evaluation.status)) { %>
+        <hr>
+        <form method="post" action="/verifier/marks/<%= evaluation.id %>/reopen">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="form-label" for="reason">Send back for correction</label>
+          <div class="input-group">
+            <input class="form-control" id="reason" name="reason" maxlength="500" required placeholder="What should the evaluator correct?">
+            <button class="btn btn-outline-danger" type="submit">Reopen</button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% } else { %>
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Finalization</div>
+    <div class="card-body">
+      <% if (evaluation.status === 'VERIFIED') { %>
+        <form class="d-inline" method="post" action="/controller/marks/<%= evaluation.id %>/finalize">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-success" type="submit">Finalize marks</button>
+        </form>
+      <% } else if (evaluation.status === 'FINALIZED') { %>
+        <span class="badge text-bg-success">Finalized</span>
+        <span class="text-muted small ms-2">These marks are included in results.</span>
+      <% } else { %>
+        <p class="text-muted small mb-2">Marks must be verified before they can be finalized.</p>
+      <% } %>
+      <% if (['VERIFIED', 'FINALIZED'].includes(evaluation.status)) { %>
+        <hr>
+        <form method="post" action="/controller/marks/<%= evaluation.id %>/reopen">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="form-label" for="reason">Reopen with reason</label>
+          <div class="input-group">
+            <input class="form-control" id="reason" name="reason" maxlength="500" required placeholder="Why are these marks being reopened?">
+            <button class="btn btn-outline-danger" type="submit">Reopen</button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card mb-3">
+  <div class="card-header fw-semibold">Question marks</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>No.</th><th>Question</th><th>Max</th><th>Awarded</th><th>Comment</th></tr></thead>
+      <tbody>
+      <% questions.forEach(function (q) { const m = marksByQuestion[q.id]; %>
+        <tr>
+          <td class="text-nowrap"><%= q.display_no %></td>
+          <td><%= q.body %></td>
+          <td><%= Number(q.marks) %></td>
+          <td class="fw-semibold"><%= m && m.marks_awarded !== null ? Number(m.marks_awarded) : '—' %></td>
+          <td class="small"><%= m && m.comment ? m.comment : '—' %></td>
+        </tr>
+      <% }); %>
+      <% if (!questions.length) { %><tr><td colspan="5" class="text-center text-muted py-4">No questions are attached to this evaluation.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+  <% if (evaluation.remarks) { %>
+    <div class="card-body border-top"><span class="text-muted small">Remarks:</span> <%= evaluation.remarks %></div>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Marks history</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Reason</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+      <% history.forEach(function (h) { %>
+        <tr>
+          <td class="text-nowrap"><%= new Date(h.created_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+          <td><%= h.action %></td>
+          <td><%= h.actor_name %></td>
+          <td class="small"><%= h.reason || '—' %></td>
+          <td><%= h.total_before !== null ? Number(h.total_before) : '—' %></td>
+          <td><%= h.total_after !== null ? Number(h.total_after) : '—' %></td>
+        </tr>
+      <% }); %>
+      <% if (!history.length) { %><tr><td colspan="6" class="text-center text-muted py-3">No marks actions yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

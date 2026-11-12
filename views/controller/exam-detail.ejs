@@ -1,0 +1,97 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/controller/exams">Examinations</a></li><li class="breadcrumb-item active"><%= exam.name %></li></ol></nav>
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= exam.name %></h1>
+    <p class="text-muted mb-0"><%= exam.course_code %> — <%= exam.course_title %> &middot; <%= exam.exam_type %> &middot; <%= String(exam.exam_date).slice(0, 10) %></p>
+  </div>
+  <div class="d-flex gap-2">
+    <% if (exam.status !== 'CLOSED') { %><a class="btn btn-outline-secondary" href="/controller/exams/<%= exam.id %>/edit">Edit</a><% } %>
+    <% if (nextStatus) { %>
+      <form method="post" action="/controller/exams/<%= exam.id %>/status">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="status" value="<%= nextStatus %>">
+        <button class="btn btn-primary" type="submit">
+          <%= nextStatus === 'MARKS_FINALIZED' ? 'Finalize marks' : nextStatus === 'CLOSED' ? 'Close examination' : 'Move to ' + nextStatus.replaceAll('_', ' ').toLowerCase() %>
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Status</div><div class="fs-5"><span class="badge text-bg-info"><%= exam.status.replaceAll('_', ' ') %></span></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Max marks</div><div class="fs-5"><%= Number(exam.max_marks) %></div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Duration</div><div class="fs-5"><%= exam.duration_minutes %> min</div></div></div></div>
+  <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Paper deadline</div><div class="fs-5 small"><%= exam.paper_deadline ? new Date(exam.paper_deadline).toISOString().slice(0, 16).replace('T', ' ') : '—' %></div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Question papers</span>
+        <a class="btn btn-sm btn-outline-secondary" href="/controller/papers?examId=<%= exam.id %>">All papers</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead><tr><th>Set</th><th>Latest version</th><th>Status</th><th>Marks</th></tr></thead>
+          <tbody>
+          <% papers.forEach(function (p) { %>
+            <tr>
+              <td class="fw-semibold">Set <%= p.set_code %></td>
+              <td><%= p.version_no ? 'v' + p.version_no : '—' %></td>
+              <td><%= p.version_status ? p.version_status.replaceAll('_', ' ') : 'No version' %></td>
+              <td><%= p.total_marks ? Number(p.total_marks) : '—' %></td>
+            </tr>
+          <% }); %>
+          <% if (!papers.length) { %><tr><td colspan="4" class="text-muted text-center py-3">No papers created yet. Faculty assigned to this course create paper sets.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Answer scripts</span>
+        <div class="d-flex gap-2">
+          <a class="btn btn-sm btn-outline-secondary" href="/controller/scripts?examId=<%= exam.id %>">View scripts</a>
+          <a class="btn btn-sm btn-primary" href="/controller/scripts/new?examId=<%= exam.id %>">Upload script</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <% if (scriptStats.length) { %>
+          <div class="d-flex flex-wrap gap-2">
+            <% scriptStats.forEach(function (s) { %><span class="badge text-bg-light border"><%= s.status.replaceAll('_', ' ') %>: <%= s.n %></span><% }); %>
+          </div>
+        <% } else { %><p class="text-muted mb-0">No answer scripts uploaded yet.</p><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Evaluation progress</div>
+      <div class="card-body">
+        <% if (evaluationStats.length) { %>
+          <div class="d-flex flex-wrap gap-2">
+            <% evaluationStats.forEach(function (s) { %><span class="badge text-bg-light border"><%= s.status %>: <%= s.n %></span><% }); %>
+          </div>
+        <% } else { %><p class="text-muted mb-0">No evaluations started.</p><% } %>
+        <div class="d-flex gap-2 mt-3">
+          <a class="btn btn-sm btn-outline-secondary" href="/controller/marks?examId=<%= exam.id %>">Marks</a>
+          <a class="btn btn-sm btn-outline-secondary" href="/controller/results?examId=<%= exam.id %>">Results</a>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header fw-semibold">Exam information</div>
+      <div class="card-body small">
+        <p class="mb-1"><span class="text-muted">Created by:</span> <%= exam.created_by_name %></p>
+        <p class="mb-1"><span class="text-muted">Evaluation deadline:</span> <%= exam.evaluation_deadline ? new Date(exam.evaluation_deadline).toISOString().slice(0, 16).replace('T', ' ') : '—' %></p>
+        <p class="mb-0"><span class="text-muted">Instructions:</span> <%= exam.instructions || '—' %></p>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

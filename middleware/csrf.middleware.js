@@ -10,6 +10,9 @@ function csrfToken(req, res, next) {
 
 function csrfProtect(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  // Multipart bodies are parsed by route-level Multer after this middleware, so
+  // those routes call csrfProtect again after parsing. See answer-scripts.routes.js.
+  if (req.is('multipart/form-data')) return next();
   const sent = (req.body && req.body._csrf) || req.get('x-csrf-token') || '';
   const expected = req.session.csrf || '';
   const a = Buffer.from(String(sent));

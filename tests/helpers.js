@@ -11,4 +11,10 @@ async function loginAs(email, password = 'Demo@12345') {
   return { agent, res };
 }
 
-module.exports = { app, request, extractCsrf, loginAs };
+/** CSRF token for an already-authenticated agent (login regenerates the session). */
+async function csrfFor(agent) {
+  const page = await agent.get('/dashboard');
+  return extractCsrf(page.text);
+}
+
+module.exports = { app, request, extractCsrf, loginAs, csrfFor };

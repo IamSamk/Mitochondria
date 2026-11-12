@@ -1,0 +1,10 @@
+<% if (typeof flash !== 'undefined' && flash) { %>
+  <div class="alert alert-<%= flash.type === 'error' ? 'danger' : flash.type %>" role="alert"><%= flash.message %></div>
+<% } %>
+<% if (typeof errors !== 'undefined' && errors && errors.length) { %>
+  <div class="alert alert-danger" role="alert">
+    <ul class="mb-0">
+      <% errors.forEach(function (e) { %><li><%= e %></li><% }); %>
+    </ul>
+  </div>
+<% } %>

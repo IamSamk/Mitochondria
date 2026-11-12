@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Examinations</h1>
+    <p class="text-muted mb-0">Plan examinations, deadlines and the paper lifecycle.</p>
+  </div>
+  <a class="btn btn-primary" href="/controller/exams/new">New examination</a>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/controller/exams">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search exam or course"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="courseId">
+      <option value="">All courses</option>
+      <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="status">
+      <option value="">All statuses</option>
+      <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s.replaceAll('_', ' ') %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Marks</th><th>Status</th><th>Papers</th><th>Scripts</th><th></th></tr></thead>
+      <tbody>
+      <% exams.forEach(function (e) { %>
+        <tr>
+          <td class="fw-semibold"><%= e.name %></td>
+          <td><%= e.course_code %> — <%= e.course_title %></td>
+          <td class="text-nowrap"><%= String(e.exam_date).slice(0, 10) %></td>
+          <td><%= Number(e.max_marks) %></td>
+          <td>
+            <% const badge = { PLANNED: 'secondary', PAPER_PREPARATION: 'info', CONDUCTED: 'primary', EVALUATION: 'warning', MARKS_FINALIZED: 'success', CLOSED: 'dark' }[e.status]; %>
+            <span class="badge text-bg-<%= badge %>"><%= e.status.replaceAll('_', ' ') %></span>
+          </td>
+          <td><%= e.paper_count %></td>
+          <td><%= e.script_count %><%= e.open_script_count ? ' (' + e.open_script_count + ' open)' : '' %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/controller/exams/<%= e.id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!exams.length) { %><tr><td colspan="8" class="text-center text-muted py-4">No examinations match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

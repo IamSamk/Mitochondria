@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Question Papers</h1>
+    <p class="text-muted mb-0">Assemble paper sets for the examinations in your courses.</p>
+  </div>
+  <a class="btn btn-primary" href="/faculty/papers/new">New paper</a>
+</div>
+
+<% if (!exams.length) { %>
+  <div class="alert alert-warning">You have no open examinations in your assigned courses. Ask the controller to schedule one.</div>
+<% } %>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">My examinations</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Max marks</th><th>Sets created</th><th></th></tr></thead>
+      <tbody>
+      <% exams.forEach(function (e) { %>
+        <tr>
+          <td class="fw-semibold"><%= e.name %></td>
+          <td><%= e.course_code %></td>
+          <td class="text-nowrap"><%= String(e.exam_date).slice(0, 10) %></td>
+          <td><%= Number(e.max_marks) %></td>
+          <td><%= e.set_codes || 'None' %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/faculty/papers/new?examId=<%= e.id %>">Create paper</a></td>
+        </tr>
+      <% }); %>
+      <% if (!exams.length) { %><tr><td colspan="6" class="text-center text-muted py-3">No open examinations.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">All my papers</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Version</th><th>Status</th><th>Marks</th><th></th></tr></thead>
+      <tbody>
+      <% papers.forEach(function (p) { %>
+        <tr>
+          <td class="fw-semibold"><%= p.exam_name %></td>
+          <td><%= p.course_code %></td>
+          <td><span class="badge text-bg-dark">Set <%= p.set_code %></span></td>
+          <td><%= p.version_no ? 'v' + p.version_no : '—' %></td>
+          <td>
+            <% if (p.version_status) { %>
+              <% const tone = { DRAFT: 'secondary', SUBMITTED: 'info', UNDER_REVIEW: 'info', REJECTED: 'danger', APPROVED: 'success', RELEASED_FOR_PRINTING: 'primary' }[p.version_status] || 'secondary'; %>
+              <span class="badge text-bg-<%= tone %>"><%= p.version_status.replaceAll('_', ' ') %></span>
+            <% } else { %><span class="text-muted">No version</span><% } %>
+          </td>
+          <td><%= p.total_marks !== null && p.total_marks !== undefined ? Number(p.total_marks) : '—' %> / <%= Number(p.max_marks) %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/faculty/papers/<%= p.id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!papers.length) { %><tr><td colspan="7" class="text-center text-muted py-4">You have not created any paper sets yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

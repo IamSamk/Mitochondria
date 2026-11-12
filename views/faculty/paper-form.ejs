@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/papers">Question Papers</a></li><li class="breadcrumb-item active">New paper</li></ol></nav>
+
+<h1 class="h3 mb-1">Create a paper set</h1>
+<p class="text-muted">Each examination can have multiple sets (A, B, C...). Students sit one set.</p>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" action="/faculty/papers/new">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="mb-3">
+            <label class="form-label" for="examId">Examination</label>
+            <select class="form-select" id="examId" name="examId" required>
+              <option value="">Select an examination</option>
+              <% exams.forEach(function (e) { %>
+                <option value="<%= e.id %>" <%= String(form.examId) === String(e.id) ? 'selected' : '' %>>
+                  <%= e.course_code %> — <%= e.name %> (<%= String(e.exam_date).slice(0, 10) %>)<%= e.set_codes ? ' — sets: ' + e.set_codes : '' %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="setCode">Set code</label>
+            <select class="form-select" id="setCode" name="setCode" required>
+              <option value="">Select a set</option>
+              <% setCodes.forEach(function (code) { %>
+                <option value="<%= code %>" <%= String(form.setCode).toUpperCase() === code ? 'selected' : '' %>><%= code %></option>
+              <% }); %>
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit">Create draft</button>
+          <a class="btn btn-outline-secondary" href="/faculty/papers">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header fw-semibold">Examinations in my courses</div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Max marks</th><th>Existing sets</th></tr></thead>
+          <tbody>
+          <% exams.forEach(function (e) { %>
+            <tr>
+              <td><%= e.name %></td>
+              <td><%= e.course_code %></td>
+              <td><%= String(e.exam_date).slice(0, 10) %></td>
+              <td><%= Number(e.max_marks) %></td>
+              <td><%= e.set_codes || 'None' %></td>
+            </tr>
+          <% }); %>
+          <% if (!exams.length) { %><tr><td colspan="5" class="text-center text-muted py-3">No open examinations.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

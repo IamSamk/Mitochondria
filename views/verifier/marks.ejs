@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Marks to Verify</h1>
+    <p class="text-muted mb-0">Check submitted evaluations and either verify or send them back.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/controller/results">Results</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <% [['Awaiting verification', counts.SUBMITTED || 0], ['Reopened', counts.REOPENED || 0], ['Verified', counts.VERIFIED || 0], ['Finalized', counts.FINALIZED || 0]].forEach(function (card) { %>
+    <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small"><%= card[0] %></div><div class="display-6"><%= card[1] %></div></div></div></div>
+  <% }); %>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/verifier/marks">
+  <div class="col-md-5"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
+  <div class="col-md-4">
+    <select class="form-select" name="status">
+      <option value="">All statuses</option>
+      <% ['DRAFT', 'SUBMITTED', 'VERIFIED', 'FINALIZED', 'REOPENED'].forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Student</th><th>Exam</th><th>Course</th><th>Set</th><th>Marks</th><th>Status</th><th>Evaluator</th><th>Updated</th><th></th></tr></thead>
+      <tbody>
+      <% evaluations.forEach(function (ev) { %>
+        <tr>
+          <td><div class="fw-semibold"><%= ev.student_code %></div><div class="small text-muted"><%= ev.student_name %></div></td>
+          <td><%= ev.exam_name %></td>
+          <td><%= ev.course_code %></td>
+          <td><%= ev.set_code ? 'Set ' + ev.set_code : '—' %></td>
+          <td><%= Number(ev.total_marks) %> / <%= Number(ev.max_marks) %></td>
+          <td>
+            <% const tone = { DRAFT: 'secondary', SUBMITTED: 'warning', VERIFIED: 'primary', FINALIZED: 'success', REOPENED: 'danger' }[ev.status] || 'secondary'; %>
+            <span class="badge text-bg-<%= tone %>"><%= ev.status %></span>
+          </td>
+          <td><%= ev.evaluator_name %></td>
+          <td class="text-nowrap small"><%= new Date(ev.updated_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/verifier/marks/<%= ev.id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!evaluations.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No evaluations match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

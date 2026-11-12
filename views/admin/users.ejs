@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Users</h1>
+    <p class="text-muted mb-0">Manage accounts, roles and access.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/users/new">Add user</a>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/admin/users">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search name or email"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="role">
+      <option value="">All roles</option>
+      <% roles.forEach(function (r) { %><option value="<%= r.code %>" <%= filters.role === r.code ? 'selected' : '' %>><%= r.name %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="active">
+      <option value="">All statuses</option>
+      <option value="true" <%= filters.active === 'true' ? 'selected' : '' %>>Active</option>
+      <option value="false" <%= filters.active === 'false' ? 'selected' : '' %>>Inactive</option>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Last login</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      <% users.forEach(function (u) { %>
+        <tr>
+          <td class="fw-semibold"><%= u.full_name %></td>
+          <td><%= u.email %></td>
+          <td><span class="badge text-bg-secondary"><%= u.role_code %></span></td>
+          <td><%= u.department_code || '—' %></td>
+          <td><span class="badge <%= u.is_active ? 'text-bg-success' : 'text-bg-danger' %>"><%= u.is_active ? 'Active' : 'Inactive' %></span></td>
+          <td class="text-muted small"><%= u.last_login_at ? new Date(u.last_login_at).toISOString().slice(0, 16).replace('T', ' ') : 'Never' %></td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="/admin/users/<%= u.id %>/edit">Edit</a>
+            <form class="d-inline" method="post" action="/admin/users/<%= u.id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm <%= u.is_active ? 'btn-outline-danger' : 'btn-outline-success' %>" type="submit"><%= u.is_active ? 'Deactivate' : 'Activate' %></button>
+            </form>
+            <details class="d-inline-block text-start">
+              <summary class="btn btn-sm btn-outline-secondary">Reset password</summary>
+              <form class="mt-2 d-flex gap-1" method="post" action="/admin/users/<%= u.id %>/reset-password">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input class="form-control form-control-sm" type="password" name="password" minlength="8" placeholder="New password" required>
+                <button class="btn btn-sm btn-warning" type="submit">Set</button>
+              </form>
+            </details>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!users.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No users match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,74 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/questions">Question Bank</a></li><li class="breadcrumb-item active"><%= mode === 'create' ? 'New' : 'Edit' %></li></ol></nav>
+<h1 class="h3 mb-3"><%= mode === 'create' ? 'New question' : 'Edit question' %></h1>
+<div class="card" style="max-width: 900px">
+  <div class="card-body">
+    <form method="post" action="<%= mode === 'create' ? '/faculty/questions' : '/faculty/questions/' + question.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label" for="courseId">Course</label>
+          <select class="form-select" id="courseId" name="courseId" required>
+            <option value="">Select course</option>
+            <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(form.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="questionType">Type</label>
+          <select class="form-select" id="questionType" name="questionType" required>
+            <% types.forEach(function (t) { %><option value="<%= t %>" <%= form.questionType === t ? 'selected' : '' %>><%= t %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" for="marks">Marks</label>
+          <input class="form-control" id="marks" name="marks" type="number" min="0.01" max="100" step="0.01" value="<%= form.marks || '' %>" required>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label" for="difficulty">Difficulty</label>
+          <select class="form-select" id="difficulty" name="difficulty">
+            <option value="">—</option>
+            <% difficulties.forEach(function (d) { %><option value="<%= d %>" <%= form.difficulty === d ? 'selected' : '' %>><%= d %></option><% }); %>
+          </select>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="body">Question</label>
+          <textarea class="form-control" id="body" name="body" rows="4" maxlength="5000" required><%= form.body || '' %></textarea>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="unit">Unit <span class="text-muted">(optional)</span></label>
+          <input class="form-control" id="unit" name="unit" value="<%= form.unit || '' %>" maxlength="120">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="topic">Topic <span class="text-muted">(optional)</span></label>
+          <input class="form-control" id="topic" name="topic" value="<%= form.topic || '' %>" maxlength="120">
+        </div>
+
+        <div class="col-12" id="mcq-options">
+          <div class="border rounded p-3 bg-light">
+            <div class="fw-semibold mb-2">MCQ options <span class="text-muted small">(2–8; select the correct one)</span></div>
+            <% optionRows.forEach(function (o) { %>
+              <div class="input-group input-group-sm mb-2">
+                <span class="input-group-text" style="width: 44px"><%= o.label %></span>
+                <input class="form-control" name="optionBody" value="<%= o.body %>" maxlength="500" placeholder="Option text">
+                <span class="input-group-text">
+                  <input class="form-check-input mt-0" type="radio" name="correctOption" value="<%= o.index %>" <%= o.isCorrect ? 'checked' : '' %> aria-label="Correct option <%= o.label %>">
+                </span>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label" for="modelAnswer">Model answer / answer key <span class="text-muted">(restricted to faculty)</span></label>
+          <textarea class="form-control" id="modelAnswer" name="modelAnswer" rows="3" maxlength="5000"><%= form.modelAnswer || '' %></textarea>
+        </div>
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><%= mode === 'create' ? 'Add question' : 'Save changes' %></button>
+        <a class="btn btn-outline-secondary" href="/faculty/questions">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="/js/question-form.js" defer></script>
+<%- include('../partials/footer') %>

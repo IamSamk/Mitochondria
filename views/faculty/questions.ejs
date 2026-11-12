@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Question Bank</h1>
+    <p class="text-muted mb-0">Questions for the courses you are assigned to.</p>
+  </div>
+  <a class="btn btn-primary" href="/faculty/questions/new">New question</a>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/faculty/questions">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search question or topic"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="courseId">
+      <option value="">All my courses</option>
+      <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="type">
+      <option value="">All types</option>
+      <% types.forEach(function (t) { %><option value="<%= t %>" <%= filters.type === t ? 'selected' : '' %>><%= t %></option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="archived">
+      <option value="">Active</option>
+      <option value="1" <%= filters.archived === '1' ? 'selected' : '' %>>Archived</option>
+    </select>
+  </div>
+  <div class="col-md-1"><button class="btn btn-outline-secondary w-100" type="submit">Go</button></div>
+</form>
+
+<% if (!courses.length) { %>
+  <div class="alert alert-warning">You have no course assignments yet. Ask an administrator to assign you to a course.</div>
+<% } %>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Question</th><th>Course</th><th>Type</th><th>Marks</th><th>Difficulty</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      <% questions.forEach(function (q) { %>
+        <tr>
+          <td style="max-width: 520px"><span class="d-inline-block text-truncate" style="max-width: 500px"><%= q.body %></span></td>
+          <td class="text-nowrap"><%= q.course_code %></td>
+          <td><span class="badge text-bg-secondary"><%= q.question_type %></span></td>
+          <td><%= Number(q.marks) %></td>
+          <td><%= q.difficulty || '—' %></td>
+          <td><%= q.is_archived ? 'Archived' : 'Active' %></td>
+          <td class="text-end text-nowrap">
+            <% if (!q.is_archived) { %><a class="btn btn-sm btn-outline-secondary" href="/faculty/questions/<%= q.id %>/edit">Edit</a><% } %>
+            <form class="d-inline" method="post" action="/faculty/questions/<%= q.id %>/archive">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm btn-outline-<%= q.is_archived ? 'success' : 'danger' %>" type="submit"><%= q.is_archived ? 'Restore' : 'Archive' %></button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!questions.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No questions yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

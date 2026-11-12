@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/reviewer/papers">Papers to Review</a></li><li class="breadcrumb-item active"><%= version.exam_name %> — Set <%= version.set_code %> v<%= version.version_no %></li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= version.exam_name %> — Set <%= version.set_code %></h1>
+    <p class="text-muted mb-0"><%= version.course_code %> — <%= version.course_title %> &middot; v<%= version.version_no %> &middot; <%= Number(version.total_marks) %> / <%= Number(version.max_marks) %> marks</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/reviewer/papers">Back</a>
+    <a class="btn btn-primary" href="/reviewer/papers/<%= version.id %>/download">Download PDF</a>
+  </div>
+</div>
+
+<% if (version.status === 'APPROVED') { %>
+  <div class="alert alert-success">This version was approved<%= version.approved_at ? ' on ' + new Date(version.approved_at).toISOString().slice(0, 10) : '' %>. It is waiting for the controller to release it.</div>
+<% } else if (version.status === 'RELEASED_FOR_PRINTING') { %>
+  <div class="alert alert-primary">This version has been released for printing.</div>
+<% } else if (version.status === 'REJECTED') { %>
+  <div class="alert alert-danger">This version was rejected. The faculty member can start a new version.</div>
+<% } %>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Paper content</div>
+      <div class="card-body">
+        <div class="row g-2 mb-3 small">
+          <div class="col-md-4"><span class="text-muted">Exam date:</span> <%= String(version.exam_date).slice(0, 10) %></div>
+          <div class="col-md-4"><span class="text-muted">Duration:</span> <%= version.duration_minutes %> min</div>
+          <div class="col-md-4"><span class="text-muted">Submitted by:</span> <%= version.created_by_name %></div>
+          <div class="col-md-4"><span class="text-muted">Submitted:</span> <%= version.submitted_at ? new Date(version.submitted_at).toISOString().slice(0, 16).replace('T', ' ') : '—' %></div>
+        </div>
+        <% if (version.instructions) { %>
+          <div class="alert alert-light border small"><span class="fw-semibold">Instructions:</span> <%= version.instructions %></div>
+        <% } %>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Section</th><th>No.</th><th>Question</th><th>Type</th><th class="text-end">Marks</th></tr></thead>
+            <tbody>
+            <% version.questions.forEach(function (q) { %>
+              <tr>
+                <td class="text-nowrap"><%= q.section_title %></td>
+                <td><%= q.display_no %></td>
+                <td>
+                  <%= q.body %>
+                  <% if (Array.isArray(q.options_json) && q.options_json.length) { %>
+                    <div class="small text-muted mt-1"><% q.options_json.forEach(function (o) { %><div><%= o.label %>. <%= o.body %></div><% }); %></div>
+                  <% } %>
+                </td>
+                <td><span class="badge text-bg-light border"><%= q.question_type %></span></td>
+                <td class="text-end"><%= Number(q.marks) %></td>
+              </tr>
+            <% }); %>
+            <% if (!version.questions.length) { %><tr><td colspan="5" class="text-center text-muted py-4">No questions attached.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-semibold">Review trail</div>
+      <div class="card-body">
+        <% if (version.approvals.length) { %>
+          <% version.approvals.forEach(function (a) { %>
+            <div class="border rounded p-2 mb-2">
+              <div class="d-flex justify-content-between">
+                <span class="badge text-bg-<%= a.decision === 'APPROVED' ? 'success' : 'danger' %>"><%= a.decision %></span>
+                <span class="text-muted small"><%= new Date(a.decided_at).toISOString().slice(0, 16).replace('T', ' ') %></span>
+              </div>
+              <div class="small mt-1">By <%= a.reviewer_name %></div>
+              <% if (a.comments) { %><div class="small mt-1"><%= a.comments %></div><% } %>
+            </div>
+          <% }); %>
+        <% } else { %><p class="text-muted mb-0">No decisions recorded yet.</p><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header fw-semibold">Decision</div>
+      <div class="card-body">
+        <% if (reviewable) { %>
+          <form method="post" action="/reviewer/papers/<%= version.id %>/decision">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="mb-3">
+              <label class="form-label" for="comments">Comments</label>
+              <textarea class="form-control" id="comments" name="comments" rows="5" maxlength="5000" placeholder="Required when rejecting; helpful when approving."></textarea>
+            </div>
+            <button class="btn btn-success w-100 mb-2" type="submit" name="decision" value="APPROVED">Approve paper</button>
+            <button class="btn btn-outline-danger w-100" type="submit" name="decision" value="REJECTED">Reject with comments</button>
+          </form>
+        <% } else { %>
+          <p class="text-muted mb-0">This version is not awaiting review.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,71 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/controller/scripts">Answer Scripts</a></li><li class="breadcrumb-item active">Upload script</li></ol></nav>
+
+<h1 class="h3 mb-1">Upload an answer script</h1>
+<p class="text-muted">PDF only, up to <%= Number(maxUploadMb) %> MB. Files are stored outside the public web root.</p>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" action="/controller/scripts" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="examId">Examination</label>
+              <select class="form-select" id="examId" name="examId" required>
+                <option value="">Select an examination</option>
+                <% exams.forEach(function (e) { %>
+                  <option value="<%= e.id %>" <%= String(form.examId) === String(e.id) ? 'selected' : '' %>><%= e.course_code %> — <%= e.name %> (<%= String(e.exam_date).slice(0, 10) %>)</option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="studentId">Student</label>
+              <select class="form-select" id="studentId" name="studentId" required>
+                <option value="">Select a student</option>
+                <% students.forEach(function (s) { %>
+                  <option value="<%= s.id %>" <%= String(form.studentId) === String(s.id) ? 'selected' : '' %>><%= s.student_code %> — <%= s.full_name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label" for="paperId">Paper set written</label>
+              <select class="form-select" id="paperId" name="paperId" required>
+                <option value="">Select a set</option>
+                <% papers.forEach(function (p) { %>
+                  <option value="<%= p.id %>" <%= String(form.paperId) === String(p.id) ? 'selected' : '' %>><%= p.course_code %> — <%= p.exam_name %> — Set <%= p.set_code %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="expectedPages">Expected pages</label>
+              <input class="form-control" id="expectedPages" name="expectedPages" type="number" min="1" max="500" value="<%= form.expectedPages || '' %>">
+              <div class="form-text">Optional, but recommended.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="script">Scanned PDF</label>
+              <input class="form-control" id="script" name="script" type="file" accept="application/pdf,.pdf" required>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button class="btn btn-primary" type="submit">Upload</button>
+            <a class="btn btn-outline-secondary" href="/controller/scripts">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="alert alert-info">
+      <div class="fw-semibold mb-1">Upload checklist</div>
+      <ul class="mb-0 small">
+        <li>One PDF per student per examination.</li>
+        <li>The paper set must belong to the selected examination.</li>
+        <li>If the page count differs from the expected count, the script is flagged and cannot be verified until corrected.</li>
+        <li>Duplicate uploads for the same student and exam are rejected.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>
