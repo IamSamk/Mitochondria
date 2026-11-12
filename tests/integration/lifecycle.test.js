@@ -227,7 +227,9 @@ describe('full examination lifecycle through the UI routes', () => {
     expect(csv.headers['content-type']).toMatch(/text\/csv/);
     expect(csv.text).toContain('student_code,student_name');
     expect(csv.text).toContain(student.student_code);
-    expect((await verifier.agent.get(`/controller/results?examId=${examId}`)).status).toBe(200);
+    const verifierResults = await verifier.agent.get(`/controller/results?examId=${examId}`);
+    expect(verifierResults.status).toBe(200);
+    expect(verifierResults.text).toContain(`/verifier/marks/${evaluationId}`);
 
     // --- Rejection → revision → resubmission path ----------------------
     const paperB = await faculty.agent.post('/faculty/papers/new').type('form')

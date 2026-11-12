@@ -47,7 +47,7 @@
           <td><%= max ? ((marks / max) * 100).toFixed(1) : '0.0' %>%</td>
           <td><%= r.evaluator_name %></td>
           <td class="text-nowrap small"><%= r.submitted_at ? new Date(r.submitted_at).toISOString().slice(0, 16).replace('T', ' ') : '—' %></td>
-          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="/controller/marks/<%= r.evaluation_id %>">Open</a></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="<%= currentUser.role === 'VERIFIER' ? '/verifier/marks/' + r.evaluation_id : '/controller/marks/' + r.evaluation_id %>">Open</a></td>
         </tr>
       <% }); %>
       <% if (!rows.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No finalized results yet.</td></tr><% } %>
