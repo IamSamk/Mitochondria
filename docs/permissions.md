@@ -35,6 +35,12 @@ Legend: ✔ allowed, own = only own records / assigned courses / own department,
 | Finalize marks, reopen with reason | — | ✔ | — | — | — | ✔ (verify step) | — | — |
 | Reports / mark sheets / CSV | — | ✔ | own evaluations | — | — | ✔ | own dept (read) | own dept (read) |
 
-Resolved: **finalize is Controller-only**; the Verifier verifies a submitted evaluation or sends it back with a reason, and the Controller finalizes verified marks or reopens finalized ones with a reason. Student registry records are managed by Admin and are never sign-in accounts (no student portal). Paper status flow: `DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED → RELEASED_FOR_PRINTING`, with subject-head veto possible at `SUBMITTED`/`UNDER_REVIEW`/`APPROVED`; the teacher finalizes an `APPROVED` paper before the controller can release it.
+- **Contributed question pool** (submit/review/score/assemble) | — | ✔ | own courses | ✔ (score) | — | — | own dept | own dept (read) |
+- **Revaluation applications** | — | open/close windows | — | — | — | review | — | — |
+- **Revaluation requests** | — | review | review | — | — | review | — | — |
+- **Student portal** (exams/results/seat/notifications/announcements/revaluation) | — | — | — | — | — | — | — | — |
+- **Announcements** | ✔ | ✔ | ✔ | — | — | — | ✔ | ✔ (read) |
+- **Exam timetable solver** | — | ✔ | ✔ | — | — | — | — | — |
+- **Seating templates & optimal placement** | — | — | ✔ | — | — | — | — | — | the Verifier verifies a submitted evaluation or sends it back with a reason, and the Controller finalizes verified marks or reopens finalized ones with a reason. Student registry records are managed by Admin and are never sign-in accounts (no student portal). Paper status flow: `DRAFT → SUBMITTED → UNDER_REVIEW → APPROVED → RELEASED_FOR_PRINTING`, with subject-head veto possible at `SUBMITTED`/`UNDER_REVIEW`/`APPROVED`; the teacher finalizes an `APPROVED` paper before the controller can release it.
 
 Student portal: the `STUDENT` role is scoped to its own record — upcoming exams in the department, published results, assigned seat, notifications, and revaluation applications. Heads and faculty have no access to student portal routes or data.

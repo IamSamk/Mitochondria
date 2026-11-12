@@ -10,12 +10,13 @@ Every sidebar page is a real, database-backed workflow (no mock screens):
 
 - **Admin** — user accounts and roles, student registry (add/edit/deactivate records used by script uploads), departments, courses, faculty-course assignments, filterable audit log.
 - **Controller** — create/edit examinations and advance their lifecycle; monitor approved papers and release them for printing; upload answer-script PDFs with page-count validation, hold/verify/reallocate them; finalize verified marks; view results and export CSV.
-- **Faculty** — question bank for assigned courses (MCQ/short/descriptive with answer keys), multi-set paper builder with repeatable draft saves, mark-total validation, PDF generation on submission, teacher finalization after approval, revisions after rejection, direct marksheet entry/CSV import with later edits, one-click seating and invigilation generation with row-level editing, per-question evaluation of allocated scripts with drafts and correction cycles.
+- **Faculty** — question bank and contributed question pool with review/scoring, multi-set paper builder with repeatable draft saves, mark-total validation, PDF generation on submission, teacher finalization after approval, revisions after rejection, direct marksheet entry/CSV import with later edits, one-click seating and invigilation generation with row-level editing and template-based optimal placement, exam timetable conflict solver, announcements, per-question evaluation of allocated scripts with drafts and correction cycles.
 - **Reviewer** — head-approved paper queue, paper detail, approve/reject with comments, PDF download.
 - **Subject Head** — supervise department papers, approve submissions into the reviewer queue, veto a paper at any pre-release stage (clearing teacher finalization), discuss papers and individual questions in comments, read department marksheets and logistics plans.
 - **Department Head** — read-only supervision of the whole department: papers, marksheets, seating and invigilation, plus the same comment and veto rights.
 - **Printing Coordinator** — released-paper queue and PDF downloads only.
 - **Marks Verifier** — submitted-marks queue, verify or send back with a reason, download scripts, read finalized results.
+- **Student** — login with default password, dashboard, upcoming exams, published results, seat assignment, notifications, announcements, revaluation applications.
 
 Every signed-in role also has **My account**: a read-only profile summary plus self-service display-name update and password change. Changing a password keeps the current session signed in and terminates every other session for that account. Students are records in a registry, not sign-in accounts — deactivating one hides them from the script-upload picker but keeps their historical scripts and results.
 
@@ -69,6 +70,7 @@ If a variable is missing, the site shows a "Server is not configured yet" page i
 | Marks Verifier | verifier@college.test |
 | Subject Head (CSE) | subjecthead@college.test |
 | Department Head (CSE) | depthead@college.test |
+| Student (CS101) | student1@college.test |
 | Student (CS101) | student1@college.test |
 
 ## Conventions (shared contracts)

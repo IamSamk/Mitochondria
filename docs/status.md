@@ -18,7 +18,15 @@
 | Digital valuation | Tested | M4 | Draft, submit, verifier reopen, resubmit, download | — |
 | Marks / results | Tested | M5 | Verify, finalize, controller reopen, exam filter with stable summary counts, results page + CSV | — |
 | Audit viewer / dashboards | Tested | M5 | Role-specific dashboards incl. subject/department heads; audit filters; actions audited | — |
+| Student portal & notifications | Tested | M7 | STUDENT role with login/default password, dashboard, exams, results, seat, notifications, announcements; notification triggers | - |
+| Revaluation | Tested | M7 | Revaluation windows, student applications, staff review with mark adjustment and audit | - |
+| Seating templates & optimal placement | Tested | M7 | Reusable room templates (up to 100x100), multi-room instances, greedy+backtracking optimal placement algorithm | - |
+| Question assembly | Tested | M7 | Contributed question pool, review/scoring, auto-assembly by topic/difficulty/marks, materialize to paper draft | - |
+| Exam timetable solver | Tested | M7 | Conflict graph from shared students, greedy graph colouring, exam slots | - |
+| Announcements | Tested | M7 | Department/role-targeted notices, student-facing list | - |
 | Integration | Tested | All | 50 Jest/Supertest tests across 6 suites: nav routes, RBAC, students, account, full lifecycle, role workflows | — |
 | Deployment / docs | Tested | All | `pnpm build` migrations + seed; missing-env setup page verified | — |
 
-Notes: schema migrations are `001_initial_schema.sql`, `002_student_registry.sql` and `003_role_workflows.sql` (paper workflow/head reviews/comments/download locks/`exam_marks`/seating/invigilation). The automated suite (`pnpm test`) rebuilds `emp_test` from migrations + seed, then covers every role's sidebar route, cross-role 403s, the student registry and self-service account flows, a complete lifecycle (exam → question → paper → head approval → review → teacher finalize → release → script upload/verify/allocate → evaluation → correction → verification → finalize/reopen → results CSV), and the role workflows: draft saves, head veto and recovery, comments, download lock attribution/clear, password prompt, marksheet edits/import, and seating/invigilation generation and edits. It also asserts that filtering the marks pages by status does not zero the summary cards. The same lifecycle was manually exercised end-to-end against the dev database.
+Notes: schema migrations are 001-008 (initial, student registry, role workflows, student portal/notifications, revaluation, seating templates, announcements, question assembly/timetable). The automated suite (pnpm test) rebuilds emp_test from migrations + seed and covers 51 tests across 6 suites.
+
+

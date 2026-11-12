@@ -181,7 +181,7 @@ For 100×100 rooms this is ~10^4 cells per room and trivially fast.
 - Faculty dashboard gains "Announcements" composer for department-wide notices
   (stored in `announcements` table, targeted by role/department).
 
-## 7. Phase plan
+All phases are implemented. See docs/status.md for the module-level status table.
 
 | Phase | Scope | Key deliverables |
 |---|---|---|
