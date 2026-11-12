@@ -31,6 +31,16 @@ pnpm test           # rebuilds emp_test, runs Jest + Supertest
 ```
 `pnpm db:reset` drops and recreates the dev schema (never in production).
 
+## Deploying to Vercel
+1. Create a hosted Postgres database (Neon via Vercel Marketplace, or Supabase) and copy its connection string.
+2. In Vercel → Project → Settings → Environment Variables add:
+   - `DATABASE_URL` – the connection string (Supabase: use the pooler URI)
+   - `SESSION_SECRET` – a long random value
+   - `SEED_DEMO_DATA=true` – optional, creates the demo accounts below
+3. Redeploy. The build (`pnpm build`) applies pending migrations and seeds roles automatically.
+
+If a variable is missing, the site shows a "Server is not configured yet" page instead of crashing.
+
 ## Demo accounts (synthetic; password `Demo@12345`)
 | Role | Email |
 |---|---|

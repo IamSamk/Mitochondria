@@ -2,7 +2,7 @@ require('dotenv').config({ quiet: true });
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
-const { query } = require('./config/database');
+const { query, isConfigured } = require('./config/database');
 const sessionMiddleware = require('./config/session');
 const { csrfToken, csrfProtect } = require('./middleware/csrf.middleware');
 const { NAV } = require('./config/navigation');
@@ -43,6 +43,25 @@ app.get('/health', async (req, res) => {
     res.status(503).json({ success: false, error: { code: 'DB_DOWN', message: 'Database unavailable' } });
   }
 });
+
+// Missing deployment config: show a clear 503 instead of crashing the whole function.
+const setupProblems = [
+  !isConfigured && 'DATABASE_URL is not set',
+  sessionMiddleware.missingSecret && 'SESSION_SECRET is not set (or still the placeholder)'
+].filter(Boolean);
+if (setupProblems.length) {
+  console.error(`App not configured: ${setupProblems.join('; ')}. Add these as environment variables and redeploy.`);
+  app.use((req, res) => {
+    res.locals.currentUser = null;
+    res.locals.nav = [];
+    res.locals.currentPath = req.path;
+    res.locals.title = 'Setup required';
+    res.status(503).render('errors/error', {
+      status: 503,
+      message: `Server is not configured yet: ${setupProblems.join('; ')}.`
+    });
+  });
+}
 
 app.use(sessionMiddleware);
 app.use(csrfToken);
