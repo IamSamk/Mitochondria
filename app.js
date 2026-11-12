@@ -69,11 +69,20 @@ app.use(sessionMiddleware);
 app.use(requestLogger);
 app.use(csrfToken);
 app.use(flash);
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.nav = req.session.user ? NAV[req.session.user.role] || [] : [];
   res.locals.currentPath = req.path;
   res.locals.title = 'Examination Management Platform';
+  res.locals.unreadNotifications = 0;
+  if (req.session && req.session.user) {
+    try {
+      const { rows } = await query(
+        'SELECT count(*)::int AS n FROM notifications WHERE user_id=$1 AND read_at IS NULL',
+        [req.session.user.id]);
+      res.locals.unreadNotifications = rows[0].n;
+    } catch (e) { /* ignore */ }
+  }
   next();
 });
 app.use(csrfProtect);
@@ -101,6 +110,8 @@ app.use('/printing/papers', require('./modules/printing/printing.routes'));
 app.use('/verifier/marks', require('./modules/evaluations/verifier.routes'));
 app.use('/head', require('./modules/supervision/supervision.routes'));
 app.use('/papers', require('./modules/paper-collab/paper-collab.routes'));
+app.use('/notifications', require('./modules/notifications/notifications.routes'));
+app.use('/student', require('./modules/student-portal/student-portal.routes'));
 
 // 404
 app.use((req, res) => res.status(404).render('errors/error', { status: 404, message: 'Page not found' }));

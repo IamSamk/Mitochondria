@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">My Exams</h1><p class="text-muted mb-0"><%= student.full_name %> &middot; <%= student.department_name %></p></div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Type</th><th>Date</th><th>Duration</th><th>Max marks</th><th>Status</th></tr></thead>
+      <tbody>
+      <% exams.forEach(function(e){ %>
+        <tr>
+          <td class="fw-semibold"><%= e.name %></td>
+          <td><%= e.course_code %> — <%= e.course_title %></td>
+          <td><%= e.exam_type %></td>
+          <td class="text-nowrap"><%= String(e.exam_date).slice(0,16).replace('T',' ') %></td>
+          <td><%= e.duration_minutes %> min</td>
+          <td><%= Number(e.max_marks) %></td>
+          <td><%= e.status %></td>
+        </tr>
+      <% }); %>
+      <% if(!exams.length){ %><tr><td colspan="7" class="text-center text-muted py-4">No exams scheduled.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

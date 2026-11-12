@@ -13,7 +13,8 @@ const ACCOUNTS = {
   PRINTING: 'printing@college.test',
   VERIFIER: 'verifier@college.test',
   SUBJECT_HEAD: 'subjecthead@college.test',
-  DEPARTMENT_HEAD: 'depthead@college.test'
+  DEPARTMENT_HEAD: 'depthead@college.test',
+  STUDENT: 'student1@college.test'
 };
 
 for (const [role, email] of Object.entries(ACCOUNTS)) {

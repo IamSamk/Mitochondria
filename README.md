@@ -69,6 +69,7 @@ If a variable is missing, the site shows a "Server is not configured yet" page i
 | Marks Verifier | verifier@college.test |
 | Subject Head (CSE) | subjecthead@college.test |
 | Department Head (CSE) | depthead@college.test |
+| Student (CS101) | student1@college.test |
 
 ## Conventions (shared contracts)
 - **DB**: snake_case plural tables, `bigint` identity PKs, `timestamptz` (UTC), status via `CHECK`. Schema changes only via new numbered files in `database/migrations/` (never edit an applied one).
@@ -81,3 +82,4 @@ If a variable is missing, the site shows a "Server is not configured yet" page i
 - **Git**: feature branches, PR + 1 review, never commit `.env`, uploads or real data.
 
 See `docs/permissions.md` and `docs/status.md`.
+

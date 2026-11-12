@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">My Results</h1><p class="text-muted mb-0"><%= student.full_name %> &middot; <%= student.department_name %></p></div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Marks</th><th>Max</th><th>Grade</th></tr></thead>
+      <tbody>
+      <% results.forEach(function(r){ %>
+        <tr>
+          <td class="fw-semibold"><%= r.exam_name %></td>
+          <td><%= r.course_code %></td>
+          <td class="text-nowrap"><%= String(r.exam_date).slice(0,10) %></td>
+          <td><%= r.marks_obtained !== null && r.marks_obtained !== undefined ? Number(r.marks_obtained) : '—' %></td>
+          <td><%= Number(r.max_marks) %></td>
+          <td><%= r.grade || '—' %></td>
+        </tr>
+      <% }); %>
+      <% if(!results.length){ %><tr><td colspan="6" class="text-center text-muted py-4">No results published yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

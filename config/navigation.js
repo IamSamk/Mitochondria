@@ -7,6 +7,7 @@ const NAV = {
   PRINTING: [['Dashboard', '/dashboard'], ['Released Papers', '/printing/papers']],
   VERIFIER: [['Dashboard', '/dashboard'], ['Marks to Verify', '/verifier/marks'], ['Results', '/controller/results']],
   SUBJECT_HEAD: [['Dashboard', '/dashboard'], ['Department Papers', '/head/papers'], ['Marksheets', '/head/marksheets'], ['Seating & Invigilation', '/head/logistics']],
-  DEPARTMENT_HEAD: [['Dashboard', '/dashboard'], ['Department Papers', '/head/papers'], ['Marksheets', '/head/marksheets'], ['Seating & Invigilation', '/head/logistics']]
+  DEPARTMENT_HEAD: [['Dashboard', '/dashboard'], ['Department Papers', '/head/papers'], ['Marksheets', '/head/marksheets'], ['Seating & Invigilation', '/head/logistics']],
+  STUDENT: [['Dashboard', '/dashboard'], ['My Exams', '/student/exams'], ['My Results', '/student/results'], ['My Seat', '/student/seat'], ['Revaluation', '/student/revaluation'], ['Notifications', '/student/notifications']]
 };
 module.exports = { NAV };

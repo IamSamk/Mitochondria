@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">My Seat</h1><p class="text-muted mb-0"><%= student.full_name %> &middot; <%= student.department_name %></p></div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Date</th><th>Room</th><th>Seat</th></tr></thead>
+      <tbody>
+      <% seats.forEach(function(s){ %>
+        <tr>
+          <td class="fw-semibold"><%= s.exam_name %></td>
+          <td class="text-nowrap"><%= String(s.exam_date).slice(0,10) %></td>
+          <td><%= s.room_name %></td>
+          <td><%= s.seat_no %></td>
+        </tr>
+      <% }); %>
+      <% if(!seats.length){ %><tr><td colspan="4" class="text-center text-muted py-4">No seat assigned yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

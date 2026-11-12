@@ -10,7 +10,8 @@ const ROLES = [
   [5, 'PRINTING', 'Printing Coordinator', 'Accesses only released approved papers'],
   [6, 'VERIFIER', 'Marks Verifier', 'Verifies and finalizes marks'],
   [7, 'SUBJECT_HEAD', 'Subject Head', 'Supervises papers and marks, approves or vetoes paper finalization'],
-  [8, 'DEPARTMENT_HEAD', 'Department Head', 'Read-only supervision of the whole department']
+  [8, 'DEPARTMENT_HEAD', 'Department Head', 'Read-only supervision of the whole department'],
+  [9, 'STUDENT', 'Student', 'Views exams, results, seat assignment; applies for revaluation']
 ];
 
 const DEMO_PASSWORD = 'Demo@12345'; // synthetic demo accounts only
@@ -38,7 +39,8 @@ async function seed({ demo = true } = {}) {
     ['printing@college.test', 'Demo Printing Coordinator', 5],
     ['verifier@college.test', 'Demo Marks Verifier', 6],
     ['subjecthead@college.test', 'Demo Subject Head', 7],
-    ['depthead@college.test', 'Demo Department Head', 8]
+    ['depthead@college.test', 'Demo Department Head', 8],
+    ['student1@college.test', 'Demo Student One', 9]
   ];
   const ids = {};
   for (const [email, name, role] of users) {
@@ -65,6 +67,9 @@ async function seed({ demo = true } = {}) {
       `INSERT INTO students(student_code, full_name, department_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
       [`S2026${String(i).padStart(3, '0')}`, `Synthetic Student ${i}`, dept]);
   }
+  await pool.query(
+    `UPDATE students SET user_id=$1, email=$2 WHERE student_code='S2026001'`,
+    [ids['student1@college.test'], 'student1@college.test']);
 }
 
 module.exports = { seed, ROLES, DEMO_PASSWORD };

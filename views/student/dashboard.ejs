@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Student Dashboard</h1>
+    <p class="text-muted mb-0">Welcome, <%= student.full_name %> &middot; <%= student.department_name %></p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Upcoming exams</div><div class="display-6"><%= exams.length %></div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Results published</div><div class="display-6"><%= results.length %></div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Unread notifications</div><div class="display-6"><%= notifications.filter(n=>!n.read_at).length %></div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Upcoming exams</div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Exam</th><th>Course</th><th>Date</th></tr></thead>
+          <tbody>
+          <% exams.forEach(function(e){ %>
+            <tr><td class="fw-semibold"><%= e.name %></td><td><%= e.course_code %></td><td class="text-nowrap"><%= String(e.exam_date).slice(0,16).replace('T',' ') %></td></tr>
+          <% }); %>
+          <% if(!exams.length){ %><tr><td colspan="3" class="text-center text-muted py-3">No upcoming exams.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Recent notifications</div>
+      <div class="card-body">
+        <% notifications.forEach(function(n){ %>
+          <div class="border rounded p-2 mb-2 <%= n.read_at ? 'opacity-50' : '' %>">
+            <div class="fw-semibold small"><%= n.title %></div>
+            <div class="small text-muted"><%= n.body || '' %></div>
+          </div>
+        <% }); %>
+        <% if(!notifications.length){ %><p class="text-muted mb-0">No notifications yet.</p><% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

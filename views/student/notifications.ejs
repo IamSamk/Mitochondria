@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Notifications</h1></div>
+  <form method="post" action="/notifications/read-all"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-outline-secondary btn-sm" type="submit">Mark all read</button></form>
+</div>
+<div class="card">
+  <div class="list-group list-group-flush">
+  <% notifications.forEach(function(n){ %>
+    <div class="list-group-item <%= n.read_at ? 'text-muted' : 'fw-semibold' %>">
+      <div class="d-flex justify-content-between">
+        <span><%= n.title %></span>
+        <small class="text-muted"><%= new Date(n.created_at).toISOString().slice(0,16).replace('T',' ') %></small>
+      </div>
+      <% if(n.body){ %><div class="small"><%= n.body %></div><% } %>
+      <% if(n.link){ %><a class="small" href="<%= n.link %>">Open</a><% } %>
+      <% if(!n.read_at){ %>
+        <form method="post" action="/notifications/<%= n.id %>/read" class="mt-1">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-sm btn-link p-0" type="submit">Mark read</button>
+        </form>
+      <% } %>
+    </div>
+  <% }); %>
+  <% if(!notifications.length){ %><div class="list-group-item text-muted">No notifications yet.</div><% } %>
+  </div>
+</div>
+<%- include('../partials/footer') %>
