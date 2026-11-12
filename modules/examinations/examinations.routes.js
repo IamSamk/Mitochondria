@@ -68,20 +68,19 @@ router.post('/', validators, asyncHandler(async (req, res) => {
   }
   try {
     const exam = await exams.createExam(examPayload(req), req.session.user.id, req.ip);
-    // Notify students in the exam's department.
+    // Notify students in the exam's department (non-fatal).
     try {
-      const course = await academics.getCourse ? await academics.getCourse(exam.course_id) : null;
-    } catch (e) {}
-    const courseRows = await query('SELECT department_id FROM courses WHERE id=$1', [exam.course_id]);
-    const deptId = courseRows.rows[0] && courseRows.rows[0].department_id;
-    if (deptId) {
-      await notifications.notifyDepartment(deptId, ['STUDENT'], {
-        type: 'EXAM_SCHEDULED',
-        title: `New exam scheduled: ${exam.name}`,
-        body: `${exam.name} on ${new Date(exam.exam_date).toISOString().slice(0,10)} (${exam.duration_minutes} min).`,
-        link: '/student/exams'
-      });
-    }
+      const courseRows = await query('SELECT department_id FROM courses WHERE id=$1', [exam.course_id]);
+      const deptId = courseRows.rows[0] && courseRows.rows[0].department_id;
+      if (deptId) {
+        await notifications.notifyDepartment(deptId, ['STUDENT'], {
+          type: 'EXAM_SCHEDULED',
+          title: `New exam scheduled: ${exam.name}`,
+          body: `${exam.name} on ${new Date(exam.exam_date).toISOString().slice(0,10)} (${exam.duration_minutes} min).`,
+          link: '/student/exams'
+        });
+      }
+    } catch (e) { /* notification failure must not fail exam creation */ }
     setFlash(req, 'success', 'Examination created.');
     res.redirect(`/controller/exams/${exam.id}`);
   } catch (e) {
