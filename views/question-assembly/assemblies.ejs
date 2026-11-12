@@ -1,0 +1,18 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Question Assemblies</h1></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Create assembly</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/assembly/assemblies" class="row g-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-4"><label class="form-label" for="examId">Exam ID</label><input class="form-control" id="examId" name="examId" type="number" required></div>
+      <div class="col-md-2"><label class="form-label" for="setCode">Set code</label><input class="form-control" id="setCode" name="setCode" maxlength="1" required></div>
+      <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Create</button></div>
+    </form>
+  </div>
+</div>
+<p class="text-muted">Open an assembly by URL: /faculty/assembly/assemblies/:id</p>
+<%- include('../partials/footer') %>

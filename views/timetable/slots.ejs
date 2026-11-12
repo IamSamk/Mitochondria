@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Slots for exam <%= examId %></h1></div>
+  <a class="btn btn-outline-secondary" href="/timetable">Back</a>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Start</th><th>End</th><th>Venue</th></tr></thead>
+      <tbody>
+      <% slots.forEach(function(s){ %>
+        <tr><td><%= new Date(s.slot_start).toISOString().slice(0,16).replace('T',' ') %></td><td><%= new Date(s.slot_end).toISOString().slice(0,16).replace('T',' ') %></td><td><%= s.venue || '—' %></td></tr>
+      <% }); %>
+      <% if(!slots.length){ %><tr><td colspan="3" class="text-center text-muted py-4">No slots yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

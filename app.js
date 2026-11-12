@@ -69,20 +69,12 @@ app.use(sessionMiddleware);
 app.use(requestLogger);
 app.use(csrfToken);
 app.use(flash);
-app.use(async (req, res, next) => {
+app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.nav = req.session.user ? NAV[req.session.user.role] || [] : [];
   res.locals.currentPath = req.path;
   res.locals.title = 'Examination Management Platform';
   res.locals.unreadNotifications = 0;
-  if (req.session && req.session.user) {
-    try {
-      const { rows } = await query(
-        'SELECT count(*)::int AS n FROM notifications WHERE user_id=$1 AND read_at IS NULL',
-        [req.session.user.id]);
-      res.locals.unreadNotifications = rows[0].n;
-    } catch (e) { /* ignore */ }
-  }
   next();
 });
 app.use(csrfProtect);
@@ -105,6 +97,8 @@ app.use('/faculty/papers', require('./modules/question-papers/faculty.routes'));
 app.use('/faculty/marksheets', require('./modules/marksheets/marksheets.routes'));
 app.use('/faculty/logistics', require('./modules/logistics/logistics.routes'));
 app.use('/faculty/seating-templates', require('./modules/seating-templates/seating-templates.routes'));
+app.use('/faculty/assembly', require('./modules/question-assembly/question-assembly.routes'));
+app.use('/timetable', require('./modules/timetable/timetable.routes'));
 app.use('/faculty/evaluations', require('./modules/evaluations/faculty.routes'));
 app.use('/reviewer/papers', require('./modules/approvals/approvals.routes'));
 app.use('/printing/papers', require('./modules/printing/printing.routes'));

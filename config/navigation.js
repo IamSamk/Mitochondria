@@ -2,7 +2,7 @@
 const NAV = {
   ADMIN: [['Dashboard', '/dashboard'], ['Users', '/admin/users'], ['Students', '/admin/students'], ['Departments & Courses', '/admin/academics'], ['Audit Log', '/admin/audit']],
   CONTROLLER: [['Dashboard', '/dashboard'], ['Examinations', '/controller/exams'], ['Paper Releases', '/controller/papers'], ['Answer Scripts', '/controller/scripts'], ['Marks', '/controller/marks'], ['Results', '/controller/results'], ['Revaluation', '/revaluation']],
-  FACULTY: [['Dashboard', '/dashboard'], ['Question Bank', '/faculty/questions'], ['Question Papers', '/faculty/papers'], ['Marksheets', '/faculty/marksheets'], ['Seating & Invigilation', '/faculty/logistics'], ['Seating Templates', '/faculty/seating-templates/templates'], ['My Evaluations', '/faculty/evaluations']],
+  FACULTY: [['Dashboard', '/dashboard'], ['Question Bank', '/faculty/questions'], ['Question Pool', '/faculty/assembly/contributions'], ['Question Papers', '/faculty/papers'], ['Marksheets', '/faculty/marksheets'], ['Seating & Invigilation', '/faculty/logistics'], ['Seating Templates', '/faculty/seating-templates/templates'], ['My Evaluations', '/faculty/evaluations']],
   REVIEWER: [['Dashboard', '/dashboard'], ['Papers to Review', '/reviewer/papers']],
   PRINTING: [['Dashboard', '/dashboard'], ['Released Papers', '/printing/papers']],
   VERIFIER: [['Dashboard', '/dashboard'], ['Marks to Verify', '/verifier/marks'], ['Results', '/controller/results']],

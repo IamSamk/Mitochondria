@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Assembly #<%= assembly.id %></h1><p class="text-muted mb-0">Exam <%= assembly.exam_id %> · Set <%= assembly.set_code %> · <%= assembly.status %></p></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Auto-assemble</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/assembly/assemblies/<%= assembly.id %>/auto" class="row g-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-3"><label class="form-label" for="topics">Topics (comma)</label><input class="form-control" id="topics" name="topics"></div>
+      <div class="col-md-2"><label class="form-label" for="easy">Easy count</label><input class="form-control" id="easy" name="easy" type="number" min="0"></div>
+      <div class="col-md-2"><label class="form-label" for="medium">Medium count</label><input class="form-control" id="medium" name="medium" type="number" min="0"></div>
+      <div class="col-md-2"><label class="form-label" for="hard">Hard count</label><input class="form-control" id="hard" name="hard" type="number" min="0"></div>
+      <div class="col-md-2"><label class="form-label" for="totalMarks">Total marks</label><input class="form-control" id="totalMarks" name="totalMarks" type="number" step="0.5"></div>
+      <div class="col-12"><button class="btn btn-primary" type="submit">Auto-assemble</button>
+        <button class="btn btn-success ms-2" type="submit" formaction="/faculty/assembly/assemblies/<%= assembly.id %>/materialize">Convert to paper</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Items</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>#</th><th>Question</th><th>Type</th><th>Diff</th><th>Marks</th><th>Score</th></tr></thead>
+      <tbody>
+      <% assembly.items.forEach(function(it){ %>
+        <tr>
+          <td><%= it.position %></td>
+          <td class="small"><%= it.body.length > 100 ? it.body.slice(0,100)+'…' : it.body %></td>
+          <td><%= it.question_type %></td>
+          <td><%= it.difficulty %></td>
+          <td><%= Number(it.marks) %></td>
+          <td><%= it.score !== null ? Number(it.score) : '—' %></td>
+        </tr>
+      <% }); %>
+      <% if(!assembly.items.length){ %><tr><td colspan="6" class="text-center text-muted py-4">No items yet. Run auto-assemble.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

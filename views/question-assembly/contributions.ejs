@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Question Pool</h1><p class="text-muted mb-0">Contributed questions reviewed and scored before assembly.</p></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Contribute a question</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/assembly/contributions" class="row g-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-3">
+        <label class="form-label" for="courseId">Course</label>
+        <select class="form-select" id="courseId" name="courseId" required>
+          <% courses.forEach(function(c){ %><option value="<%= c.id %>"><%= c.code %> — <%= c.title %></option><% }); %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="questionType">Type</label>
+        <select class="form-select" id="questionType" name="questionType"><option>DESCRIPTIVE</option><option>SHORT</option><option>MCQ</option></select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="difficulty">Difficulty</label>
+        <select class="form-select" id="difficulty" name="difficulty"><option>EASY</option><option selected>MEDIUM</option><option>HARD</option></select>
+      </div>
+      <div class="col-md-2"><label class="form-label" for="marks">Marks</label><input class="form-control" id="marks" name="marks" type="number" step="0.5" min="0.5" value="5" required></div>
+      <div class="col-md-3"><label class="form-label" for="topic">Topic</label><input class="form-control" id="topic" name="topic"></div>
+      <div class="col-12"><label class="form-label" for="body">Question</label><textarea class="form-control" id="body" name="body" rows="3" required></textarea></div>
+      <div class="col-12"><label class="form-label" for="answerKey">Answer key</label><textarea class="form-control" id="answerKey" name="answerKey" rows="2"></textarea></div>
+      <div class="col-12"><button class="btn btn-primary" type="submit">Contribute</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Pool</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Course</th><th>Question</th><th>Type</th><th>Diff</th><th>Marks</th><th>Score</th><th>Status</th><th>Review</th></tr></thead>
+      <tbody>
+      <% contributions.forEach(function(c){ %>
+        <tr>
+          <td><%= c.course_code %></td>
+          <td class="small"><%= c.body.length > 80 ? c.body.slice(0,80)+'…' : c.body %></td>
+          <td><%= c.question_type %></td>
+          <td><%= c.difficulty %></td>
+          <td><%= Number(c.marks) %></td>
+          <td><%= c.score !== null ? Number(c.score) : '—' %></td>
+          <td><%= c.status %></td>
+          <td>
+            <form method="post" action="/faculty/assembly/contributions/<%= c.id %>/review" class="d-flex gap-1">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input class="form-control form-control-sm" name="clarity" placeholder="clar" style="width:50px" required>
+              <input class="form-control form-control-sm" name="difficultyAccuracy" placeholder="diff" style="width:50px" required>
+              <input class="form-control form-control-sm" name="correctness" placeholder="corr" style="width:50px" required>
+              <button class="btn btn-sm btn-outline-primary" type="submit">Score</button>
+            </form>
+            <% if (['SUBJECT_HEAD','CONTROLLER','ADMIN'].includes(currentUser.role)) { %>
+            <form method="post" action="/faculty/assembly/contributions/<%= c.id %>/status" class="d-flex gap-1 mt-1">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <select class="form-select form-select-sm" name="status"><option>APPROVED</option><option>REJECTED</option><option>PENDING</option></select>
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Set</button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if(!contributions.length){ %><tr><td colspan="8" class="text-center text-muted py-4">No contributions yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>
