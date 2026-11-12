@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+<h1 class="h3 mb-3">Welcome, <%= currentUser.fullName %></h1>
+<% if (currentUser.role === 'ADMIN') { %>
+<div class="row g-3">
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Active users</div><div class="display-6"><%= stats.users %></div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Departments</div><div class="display-6"><%= stats.departments %></div></div></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted">Courses</div><div class="display-6"><%= stats.courses %></div></div></div></div>
+</div>
+<% } else { %>
+<div class="alert alert-info">Your role dashboard will be populated as modules are added.</div>
+<% } %>
+<%- include('partials/footer') %>

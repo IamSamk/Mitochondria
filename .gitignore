@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+storage/question-papers/*
+storage/answer-scripts/*
+!storage/question-papers/.gitkeep
+!storage/answer-scripts/.gitkeep
+backups/
+coverage/
