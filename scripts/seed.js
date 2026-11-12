@@ -8,7 +8,9 @@ const ROLES = [
   [3, 'FACULTY', 'Faculty', 'Creates questions and papers, evaluates allocated scripts'],
   [4, 'REVIEWER', 'Question Paper Reviewer', 'Approves or rejects submitted papers'],
   [5, 'PRINTING', 'Printing Coordinator', 'Accesses only released approved papers'],
-  [6, 'VERIFIER', 'Marks Verifier', 'Verifies and finalizes marks']
+  [6, 'VERIFIER', 'Marks Verifier', 'Verifies and finalizes marks'],
+  [7, 'SUBJECT_HEAD', 'Subject Head', 'Supervises papers and marks, approves or vetoes paper finalization'],
+  [8, 'DEPARTMENT_HEAD', 'Department Head', 'Read-only supervision of the whole department']
 ];
 
 const DEMO_PASSWORD = 'Demo@12345'; // synthetic demo accounts only
@@ -34,7 +36,9 @@ async function seed({ demo = true } = {}) {
     ['faculty2@college.test', 'Demo Faculty Two', 3],
     ['reviewer@college.test', 'Demo Reviewer', 4],
     ['printing@college.test', 'Demo Printing Coordinator', 5],
-    ['verifier@college.test', 'Demo Marks Verifier', 6]
+    ['verifier@college.test', 'Demo Marks Verifier', 6],
+    ['subjecthead@college.test', 'Demo Subject Head', 7],
+    ['depthead@college.test', 'Demo Department Head', 8]
   ];
   const ids = {};
   for (const [email, name, role] of users) {

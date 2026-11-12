@@ -10,14 +10,16 @@ Every sidebar page is a real, database-backed workflow (no mock screens):
 
 - **Admin** — user accounts and roles, student registry (add/edit/deactivate records used by script uploads), departments, courses, faculty-course assignments, filterable audit log.
 - **Controller** — create/edit examinations and advance their lifecycle; monitor approved papers and release them for printing; upload answer-script PDFs with page-count validation, hold/verify/reallocate them; finalize verified marks; view results and export CSV.
-- **Faculty** — question bank for assigned courses (MCQ/short/descriptive with answer keys), multi-set paper builder with mark-total validation, PDF generation on submission, revisions after rejection, per-question evaluation of allocated scripts with drafts and correction cycles.
-- **Reviewer** — submitted-paper queue, paper detail, approve/reject with comments, PDF download.
+- **Faculty** — question bank for assigned courses (MCQ/short/descriptive with answer keys), multi-set paper builder with repeatable draft saves, mark-total validation, PDF generation on submission, teacher finalization after approval, revisions after rejection, direct marksheet entry/CSV import with later edits, one-click seating and invigilation generation with row-level editing, per-question evaluation of allocated scripts with drafts and correction cycles.
+- **Reviewer** — head-approved paper queue, paper detail, approve/reject with comments, PDF download.
+- **Subject Head** — supervise department papers, approve submissions into the reviewer queue, veto a paper at any pre-release stage (clearing teacher finalization), discuss papers and individual questions in comments, read department marksheets and logistics plans.
+- **Department Head** — read-only supervision of the whole department: papers, marksheets, seating and invigilation, plus the same comment and veto rights.
 - **Printing Coordinator** — released-paper queue and PDF downloads only.
 - **Marks Verifier** — submitted-marks queue, verify or send back with a reason, download scripts, read finalized results.
 
 Every signed-in role also has **My account**: a read-only profile summary plus self-service display-name update and password change. Changing a password keeps the current session signed in and terminates every other session for that account. Students are records in a registry, not sign-in accounts — deactivating one hides them from the script-upload picker but keeps their historical scripts and results.
 
-Uploaded scripts and generated papers live outside the web root and are only served through authorized, role-checked download routes. Every form is CSRF-protected and every route enforces RBAC server-side.
+Uploaded scripts and generated papers live outside the web root and are only served through authorized, role-checked download routes. Every form is CSRF-protected and every route enforces RBAC server-side. Paper downloads are additionally protected: unauthorised attempts are recorded with the user and IP, freeze downloads for 15 minutes, and the owner can review the attempts, clear the freeze, or set an optional download password. Teachers can only finalize their own papers, and the controller cannot release a paper before that finalization.
 
 ## Prerequisites (Windows)
 - Node.js 22+ (`node -v`)
@@ -65,6 +67,8 @@ If a variable is missing, the site shows a "Server is not configured yet" page i
 | Reviewer | reviewer@college.test |
 | Printing Coordinator | printing@college.test |
 | Marks Verifier | verifier@college.test |
+| Subject Head (CSE) | subjecthead@college.test |
+| Department Head (CSE) | depthead@college.test |
 
 ## Conventions (shared contracts)
 - **DB**: snake_case plural tables, `bigint` identity PKs, `timestamptz` (UTC), status via `CHECK`. Schema changes only via new numbered files in `database/migrations/` (never edit an applied one).

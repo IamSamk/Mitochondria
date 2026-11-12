@@ -2,7 +2,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
     <h1 class="h3 mb-1">Paper Releases</h1>
-    <p class="text-muted mb-0">Approved papers can be released once, then downloaded by the printing coordinator.</p>
+    <p class="text-muted mb-0">Approved papers can be released once the subject teacher has finalized them, then downloaded by the printing coordinator.</p>
   </div>
   <a class="btn btn-outline-secondary" href="/controller/exams">Examinations</a>
 </div>
@@ -11,7 +11,7 @@
   <div class="card-header fw-semibold">Approved papers awaiting release</div>
   <div class="table-responsive">
     <table class="table align-middle mb-0">
-      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Version</th><th>Marks</th><th>Approved</th><th class="text-end">Actions</th></tr></thead>
+      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Version</th><th>Marks</th><th>Teacher finalization</th><th class="text-end">Actions</th></tr></thead>
       <tbody>
       <% pending.forEach(function (p) { %>
         <tr>
@@ -20,15 +20,25 @@
           <td><span class="badge text-bg-dark">Set <%= p.set_code %></span></td>
           <td>v<%= p.version_no %></td>
           <td><%= Number(p.total_marks) %> / <%= Number(p.max_marks) %></td>
-          <td class="text-nowrap"><%= p.released_at ? new Date(p.released_at).toISOString().slice(0, 10) : '—' %></td>
+          <td class="text-nowrap">
+            <% if (p.is_finalized) { %>
+              <span class="badge text-bg-success">Finalized</span>
+            <% } else { %>
+              <span class="badge text-bg-warning">Awaiting teacher</span>
+            <% } %>
+          </td>
           <td class="text-end">
             <div class="d-flex gap-2 justify-content-end align-items-center">
               <a class="btn btn-sm btn-outline-secondary" href="/controller/papers/<%= p.version_id %>/download">PDF</a>
-              <form class="d-flex gap-1" method="post" action="/controller/papers/<%= p.version_id %>/release">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <input class="form-control form-control-sm" name="note" placeholder="Optional note" maxlength="500">
-                <button class="btn btn-sm btn-primary text-nowrap" type="submit">Release</button>
-              </form>
+              <% if (p.is_finalized) { %>
+                <form class="d-flex gap-1" method="post" action="/controller/papers/<%= p.version_id %>/release">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <input class="form-control form-control-sm" name="note" placeholder="Optional note" maxlength="500">
+                  <button class="btn btn-sm btn-primary text-nowrap" type="submit">Release</button>
+                </form>
+              <% } else { %>
+                <span class="small text-muted">Cannot release yet</span>
+              <% } %>
             </div>
           </td>
         </tr>

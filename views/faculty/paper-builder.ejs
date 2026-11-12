@@ -62,12 +62,24 @@
         </table>
       </div>
       <% if (version.questions.length) { %>
-        <div class="card-footer d-flex justify-content-between align-items-center">
-          <span class="text-muted small"><%= version.questions.length %> question(s)</span>
-          <form method="post" action="/faculty/papers/versions/<%= version.id %>/submit">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <button class="btn btn-success" type="submit">Submit for review</button>
-          </form>
+        <div class="card-footer">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">
+              <%= version.questions.length %> question(s)
+              <% if (version.draft_saved_at) { %> &middot; last saved <%= new Date(version.draft_saved_at).toISOString().slice(0, 16).replace('T', ' ') %> UTC<% } %>
+            </span>
+            <div class="d-flex gap-2">
+              <form method="post" action="/faculty/papers/versions/<%= version.id %>/save">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-outline-secondary" type="submit">Save draft</button>
+              </form>
+              <form method="post" action="/faculty/papers/versions/<%= version.id %>/submit">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-success" type="submit">Submit for head approval</button>
+              </form>
+            </div>
+          </div>
+          <div class="small text-muted mt-2">Saved drafts stay editable. You can save as many times as you need; submission sends the paper to the subject head before it reaches the reviewer.</div>
         </div>
       <% } %>
     </div>

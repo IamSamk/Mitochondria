@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Department Papers</h1>
+    <p class="text-muted mb-0">Review submissions, approve them into the reviewer queue, or veto finalization. Comments are visible to the teacher and reviewer.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Papers in your department</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Set</th><th>Teacher</th><th>Status</th><th>Marks</th><th>Head decision</th><th>Comments</th><th></th></tr></thead>
+      <tbody>
+      <% papers.forEach(function (p) { %>
+        <tr>
+          <td class="fw-semibold"><%= p.exam_name %><div class="small text-muted"><%= String(p.exam_date).slice(0, 10) %></div></td>
+          <td><%= p.course_code %> — <%= p.course_title %></td>
+          <td><span class="badge text-bg-dark">Set <%= p.set_code %></span><div class="small text-muted">v<%= p.version_no %></div></td>
+          <td><%= p.teacher_name %></td>
+          <td>
+            <% const tone = { DRAFT: 'secondary', SUBMITTED: 'warning', UNDER_REVIEW: 'info', REJECTED: 'danger', APPROVED: 'success', RELEASED_FOR_PRINTING: 'primary' }[p.version_status] || 'secondary'; %>
+            <span class="badge text-bg-<%= tone %>"><%= p.version_status.replaceAll('_', ' ') %></span>
+            <% if (p.is_finalized) { %><span class="badge text-bg-success">finalized</span><% } %>
+          </td>
+          <td><%= Number(p.total_marks) %> / <%= Number(p.max_marks) %></td>
+          <td class="small">
+            <% if (p.head_decision) { %>
+              <span class="badge text-bg-<%= p.head_decision === 'APPROVED' ? 'info' : 'danger' %>"><%= p.head_decision %></span>
+              <div class="text-muted"><%= new Date(p.head_decided_at).toISOString().slice(0, 10) %></div>
+            <% } else { %><span class="text-muted">—</span><% } %>
+          </td>
+          <td><%= p.comment_count %></td>
+          <td class="text-end"><a class="btn btn-sm btn-primary" href="/head/papers/<%= p.paper_id %>">Open</a></td>
+        </tr>
+      <% }); %>
+      <% if (!papers.length) { %><tr><td colspan="9" class="text-center text-muted py-4">No papers in this department yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

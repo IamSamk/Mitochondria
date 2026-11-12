@@ -5,6 +5,7 @@ const { requireRole } = require('../../middleware/role.middleware');
 const { asyncHandler } = require('../../middleware/async.middleware');
 const { NotFoundError, ValidationError } = require('../../config/errors');
 const papers = require('../question-papers/question-papers.service');
+const collab = require('../paper-collab/paper-collab.service');
 
 const router = express.Router();
 router.use(requireAuth, requireRole('PRINTING'));
@@ -19,7 +20,8 @@ router.get('/:versionId/download', asyncHandler(async (req, res) => {
   if (version.status !== 'RELEASED_FOR_PRINTING') {
     throw new ValidationError('Only papers released for printing can be downloaded');
   }
-  const { detail, absPath } = await papers.ensureVersionPdf(req.params.versionId);
+  const { detail, absPath } = await collab.requestDownload(
+    req.params.versionId, req.session.user, { password: req.query.password || '' }, req.ip);
   if (!fs.existsSync(absPath)) throw new NotFoundError('The paper PDF could not be generated');
   res.download(absPath, `paper-${detail.set_code}-v${detail.version_no}.pdf`);
 }));

@@ -11,7 +11,9 @@ const ACCOUNTS = {
   FACULTY: 'faculty1@college.test',
   REVIEWER: 'reviewer@college.test',
   PRINTING: 'printing@college.test',
-  VERIFIER: 'verifier@college.test'
+  VERIFIER: 'verifier@college.test',
+  SUBJECT_HEAD: 'subjecthead@college.test',
+  DEPARTMENT_HEAD: 'depthead@college.test'
 };
 
 for (const [role, email] of Object.entries(ACCOUNTS)) {
@@ -41,7 +43,11 @@ describe('cross-role route protection', () => {
     ['verifier@college.test', '/faculty/evaluations'],
     ['controller@college.test', '/faculty/questions'],
     ['controller@college.test', '/admin/academics'],
-    ['admin@college.test', '/controller/exams']
+    ['admin@college.test', '/controller/exams'],
+    ['faculty1@college.test', '/head/papers'],
+    ['subjecthead@college.test', '/faculty/papers'],
+    ['depthead@college.test', '/reviewer/papers'],
+    ['reviewer@college.test', '/head/logistics']
   ];
 
   it.each(DENIED)('%s is denied %s with 403', async (email, path) => {
@@ -52,7 +58,7 @@ describe('cross-role route protection', () => {
 
   it('redirects anonymous users away from every protected prefix', async () => {
     const prefixes = ['/dashboard', '/admin/users', '/controller/exams', '/faculty/papers',
-      '/reviewer/papers', '/printing/papers', '/verifier/marks'];
+      '/reviewer/papers', '/printing/papers', '/verifier/marks', '/head/papers'];
     for (const path of prefixes) {
       const res = await request(app).get(path);
       expect(res.status).toBe(302);

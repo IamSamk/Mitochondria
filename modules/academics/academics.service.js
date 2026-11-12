@@ -161,7 +161,7 @@ async function getPaperContext(paperId) {
   const { rows } = await query(
     `SELECT p.*, e.name AS exam_name, e.course_id, e.max_marks, e.duration_minutes,
             e.exam_date, e.instructions, e.status AS exam_status,
-            c.code AS course_code, c.title AS course_title
+            c.code AS course_code, c.title AS course_title, c.department_id
        FROM question_papers p
        JOIN examinations e ON e.id = p.exam_id
        JOIN courses c ON c.id = e.course_id

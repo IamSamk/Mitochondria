@@ -93,10 +93,14 @@ app.use('/controller/marks', require('./modules/evaluations/controller.routes'))
 app.use('/controller/results', require('./modules/results/results.routes'));
 app.use('/faculty/questions', require('./modules/questions/questions.routes'));
 app.use('/faculty/papers', require('./modules/question-papers/faculty.routes'));
+app.use('/faculty/marksheets', require('./modules/marksheets/marksheets.routes'));
+app.use('/faculty/logistics', require('./modules/logistics/logistics.routes'));
 app.use('/faculty/evaluations', require('./modules/evaluations/faculty.routes'));
 app.use('/reviewer/papers', require('./modules/approvals/approvals.routes'));
 app.use('/printing/papers', require('./modules/printing/printing.routes'));
 app.use('/verifier/marks', require('./modules/evaluations/verifier.routes'));
+app.use('/head', require('./modules/supervision/supervision.routes'));
+app.use('/papers', require('./modules/paper-collab/paper-collab.routes'));
 
 // 404
 app.use((req, res) => res.status(404).render('errors/error', { status: 404, message: 'Page not found' }));

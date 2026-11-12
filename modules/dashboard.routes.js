@@ -8,6 +8,7 @@ const papers = require('./question-papers/question-papers.service');
 const evaluations = require('./evaluations/evaluations.service');
 const scripts = require('./answer-scripts/answer-scripts.service');
 const approvals = require('./approvals/approvals.service');
+const supervision = require('./supervision/supervision.service');
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ async function controllerView(user) {
   const [openExams, awaitingRelease, pendingScripts, awaitingFinalize, finalized, recentExams, releaseRows, scriptRows] =
     await Promise.all([
       count(`SELECT count(*)::int AS n FROM examinations WHERE status <> 'CLOSED'`),
-      count(`SELECT count(*)::int AS n FROM paper_versions WHERE status = 'APPROVED'`),
+      count(`SELECT count(*)::int AS n FROM paper_versions WHERE status = 'APPROVED' AND is_finalized`),
       count(`SELECT count(*)::int AS n FROM answer_scripts
               WHERE status IN ('UPLOADED','PENDING_VERIFICATION','ON_HOLD')`),
       count(`SELECT count(*)::int AS n FROM evaluations WHERE status = 'VERIFIED'`),
@@ -187,6 +188,39 @@ async function printingView() {
   };
 }
 
+async function headView(user) {
+  const departmentId = await supervision.userDepartmentId(user.id);
+  const { counts, headPapers, comments } = await supervision.overview(departmentId);
+  const needsDecision = headPapers.filter((p) => p.version_status === 'SUBMITTED');
+  const awaitingFinalize = headPapers.filter((p) => p.version_status === 'APPROVED' && !p.is_finalized);
+  return {
+    cards: [
+      { label: 'Papers awaiting head decision', value: counts.awaiting_head, href: '/head/papers', note: `${counts.paper_count} papers in department` },
+      { label: 'Approved papers', value: counts.approved_papers, href: '/head/papers', note: `${awaitingFinalize.length} awaiting teacher finalize` },
+      { label: 'Marks entered', value: counts.mark_rows, href: '/head/marksheets', note: `${counts.exam_count} examinations` },
+      { label: 'Logistics rows', value: counts.seat_rows + counts.invigilation_rows, href: '/head/logistics', note: `${counts.seat_rows} seats · ${counts.invigilation_rows} invigilators` },
+      { label: 'Faculty / students', value: `${counts.faculty_count} / ${counts.student_count}`, href: '/head/papers' }
+    ],
+    tables: [
+      {
+        title: 'Papers needing your decision', href: '/head/papers', columns: ['Exam', 'Course', 'Set', 'Teacher', 'Submitted'],
+        empty: 'Nothing is waiting for your approval.',
+        rows: needsDecision.slice(0, 8).map((p) => [
+          p.exam_name, p.course_code, `${p.set_code} v${p.version_no}`, p.teacher_name, when(p.submitted_at)
+        ])
+      },
+      {
+        title: 'Recent department comments', href: '/head/papers', columns: ['When', 'Author', 'Exam', 'Comment'],
+        empty: 'No comments in this department yet.',
+        rows: comments.map((c) => [
+          when(c.created_at), `${c.author_name} (${c.author_role.replaceAll('_', ' ')})`,
+          `${c.exam_name} — Set ${c.set_code}`, c.body.length > 100 ? `${c.body.slice(0, 100)}…` : c.body
+        ])
+      }
+    ]
+  };
+}
+
 async function verifierView() {
   const list = await evaluations.listEvaluations({});
   const counts = list.reduce((acc, row) => { acc[row.status] = (acc[row.status] || 0) + 1; return acc; }, {});
@@ -217,7 +251,9 @@ router.get('/dashboard', requireAuth, async (req, res, next) => {
       FACULTY: () => facultyView(user),
       REVIEWER: () => reviewerView(user),
       PRINTING: () => printingView(),
-      VERIFIER: () => verifierView()
+      VERIFIER: () => verifierView(),
+      SUBJECT_HEAD: () => headView(user),
+      DEPARTMENT_HEAD: () => headView(user)
     }[user.role] || (() => ({ cards: [], tables: [] })))();
     res.render('dashboard', { ...view, title: 'Dashboard' });
   } catch (e) { next(e); }

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { query, withTransaction } = require('../../config/database');
-const { ValidationError, NotFoundError } = require('../../config/errors');
+const { ValidationError, NotFoundError, ForbiddenError } = require('../../config/errors');
 const { logAudit } = require('../audit/audit.service');
 const academics = require('../academics/academics.service');
 const { generatePaperPdf } = require('./paper-pdf.service');
@@ -30,7 +30,8 @@ async function listPapersForFaculty(facultyId) {
     `SELECT p.id, p.set_code, p.created_at,
             e.id AS exam_id, e.name AS exam_name, e.status AS exam_status, e.exam_date, e.max_marks,
             c.code AS course_code, c.title AS course_title,
-            v.id AS version_id, v.version_no, v.status AS version_status, v.total_marks
+            v.id AS version_id, v.version_no, v.status AS version_status, v.total_marks,
+            v.is_finalized, v.draft_saved_at
        FROM question_papers p
        JOIN examinations e ON e.id = p.exam_id
        JOIN courses c ON c.id = e.course_id
@@ -48,6 +49,7 @@ async function listAllPapers({ examId = '', status = '' } = {}) {
             e.id AS exam_id, e.name AS exam_name, e.exam_date, e.max_marks, e.status AS exam_status,
             c.code AS course_code, c.title AS course_title,
             v.id AS version_id, v.version_no, v.status AS version_status, v.total_marks,
+            v.is_finalized, v.draft_saved_at,
             (SELECT r.released_at FROM paper_releases r WHERE r.version_id=v.id) AS released_at
        FROM question_papers p
        JOIN examinations e ON e.id = p.exam_id
@@ -72,23 +74,28 @@ async function getPaperDetail(paperId) {
   const latest = versions.rows[0] || null;
   let questions = [];
   let approvals = [];
+  let headReviews = [];
   let release = null;
   if (latest) {
     questions = (await query('SELECT * FROM paper_questions WHERE version_id=$1 ORDER BY position', [latest.id])).rows;
     approvals = (await query(
       `SELECT a.*, u.full_name AS reviewer_name FROM paper_approvals a
         JOIN users u ON u.id=a.reviewer_id WHERE a.version_id=$1 ORDER BY a.decided_at`, [latest.id])).rows;
+    headReviews = (await query(
+      `SELECT h.*, u.full_name AS head_name FROM paper_head_reviews h
+        JOIN users u ON u.id=h.head_id WHERE h.version_id=$1 ORDER BY h.decided_at`, [latest.id])).rows;
     release = (await query('SELECT * FROM paper_releases WHERE version_id=$1', [latest.id])).rows[0] || null;
   }
-  return { paper, versions: versions.rows, latest, questions, approvals, release };
+  return { paper, versions: versions.rows, latest, questions, approvals, headReviews, release };
 }
 
 async function getVersionDetail(versionId) {
   const { rows } = await query(
     `SELECT v.*, p.set_code, p.id AS paper_id, p.exam_id, p.created_by AS paper_owner,
+            p.download_password_hash,
             e.name AS exam_name, e.max_marks, e.duration_minutes, e.exam_date, e.instructions,
             e.status AS exam_status, e.course_id,
-            c.code AS course_code, c.title AS course_title,
+            c.code AS course_code, c.title AS course_title, c.department_id,
             u.full_name AS created_by_name
        FROM paper_versions v
        JOIN question_papers p ON p.id = v.paper_id
@@ -102,14 +109,24 @@ async function getVersionDetail(versionId) {
   const approvals = (await query(
     `SELECT a.*, u.full_name AS reviewer_name FROM paper_approvals a
       JOIN users u ON u.id=a.reviewer_id WHERE a.version_id=$1 ORDER BY a.decided_at`, [versionId])).rows;
+  const headReviews = (await query(
+    `SELECT h.*, u.full_name AS head_name FROM paper_head_reviews h
+      JOIN users u ON u.id=h.head_id WHERE h.version_id=$1 ORDER BY h.decided_at`, [versionId])).rows;
   const release = (await query('SELECT * FROM paper_releases WHERE version_id=$1', [versionId])).rows[0] || null;
-  return { ...version, questions, approvals, release };
+  return { ...version, questions, approvals, headReviews, release };
 }
 
 async function assertFacultyVersion(versionId, facultyId) {
   const version = await getVersionDetail(versionId);
   await academics.assertFacultyAssigned(facultyId, version.course_id);
   return version;
+}
+
+/** Only the subject teacher who created the paper may change or finalize it. */
+function assertPaperOwner(version, facultyId) {
+  if (Number(version.paper_owner) !== Number(facultyId)) {
+    throw new ForbiddenError('Only the subject teacher who created this paper can modify it');
+  }
 }
 
 async function createPaper({ examId, setCode }, facultyId, ip) {
@@ -167,6 +184,7 @@ async function createRevision(paperId, facultyId, ip) {
 async function getBuilder(versionId, facultyId) {
   const version = await assertFacultyVersion(versionId, facultyId);
   if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
+  assertPaperOwner(version, facultyId);
   const available = await query(
     `SELECT id, question_type, body, marks, difficulty, unit, topic
        FROM questions WHERE course_id=$1 AND NOT is_archived ORDER BY created_at DESC`, [version.course_id]);
@@ -176,13 +194,14 @@ async function getBuilder(versionId, facultyId) {
 async function addQuestion(versionId, { questionId, sectionTitle }, facultyId, ip) {
   return withTransaction(async (db) => {
     const lock = await db.query(
-      `SELECT v.*, p.exam_id FROM paper_versions v JOIN question_papers p ON p.id=v.paper_id
+      `SELECT v.*, p.exam_id, p.created_by AS paper_owner FROM paper_versions v JOIN question_papers p ON p.id=v.paper_id
         WHERE v.id=$1 FOR UPDATE`, [versionId]);
     const version = lock.rows[0];
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
     const exam = await db.query('SELECT course_id, max_marks FROM examinations WHERE id=$1', [version.exam_id]);
     await academics.assertFacultyAssigned(facultyId, exam.rows[0].course_id);
+    assertPaperOwner(version, facultyId);
 
     const q = await db.query(
       'SELECT * FROM questions WHERE id=$1 AND NOT is_archived', [questionId]);
@@ -214,13 +233,14 @@ async function addQuestion(versionId, { questionId, sectionTitle }, facultyId, i
 async function removeQuestion(versionId, paperQuestionId, facultyId, ip) {
   return withTransaction(async (db) => {
     const lock = await db.query(
-      `SELECT v.*, p.exam_id FROM paper_versions v JOIN question_papers p ON p.id=v.paper_id
+      `SELECT v.*, p.exam_id, p.created_by AS paper_owner FROM paper_versions v JOIN question_papers p ON p.id=v.paper_id
         WHERE v.id=$1 FOR UPDATE`, [versionId]);
     const version = lock.rows[0];
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
     const exam = await db.query('SELECT course_id FROM examinations WHERE id=$1', [version.exam_id]);
     await academics.assertFacultyAssigned(facultyId, exam.rows[0].course_id);
+    assertPaperOwner(version, facultyId);
     const removed = await db.query(
       'DELETE FROM paper_questions WHERE id=$1 AND version_id=$2 RETURNING id', [paperQuestionId, versionId]);
     if (!removed.rows[0]) throw new NotFoundError('Question is not part of this version');
@@ -241,8 +261,9 @@ async function removeQuestion(versionId, paperQuestionId, facultyId, ip) {
 async function submitVersion(versionId, facultyId, ip) {
   return withTransaction(async (db) => {
     const lock = await db.query(
-      `SELECT v.*, p.set_code, p.exam_id, e.name AS exam_name, e.max_marks, e.duration_minutes,
-              e.exam_date, e.instructions, e.course_id, c.code AS course_code, c.title AS course_title
+      `SELECT v.*, p.set_code, p.exam_id, p.created_by AS paper_owner, e.name AS exam_name, e.max_marks,
+              e.duration_minutes, e.exam_date, e.instructions, e.course_id,
+              c.code AS course_code, c.title AS course_title, c.department_id
          FROM paper_versions v
          JOIN question_papers p ON p.id=v.paper_id
          JOIN examinations e ON e.id=p.exam_id
@@ -252,6 +273,7 @@ async function submitVersion(versionId, facultyId, ip) {
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be submitted');
     await academics.assertFacultyAssigned(facultyId, version.course_id);
+    assertPaperOwner(version, facultyId);
 
     const questions = (await db.query(
       'SELECT * FROM paper_questions WHERE version_id=$1 ORDER BY position', [versionId])).rows;
@@ -271,11 +293,69 @@ async function submitVersion(versionId, facultyId, ip) {
       course: { code: version.course_code, title: version.course_title },
       questions
     });
+    // If the department has an active subject head, the paper waits for their
+    // approval/veto before it reaches the reviewer queue.
+    const head = await db.query(
+      `SELECT 1 FROM users u JOIN roles r ON r.id=u.role_id
+        WHERE r.code='SUBJECT_HEAD' AND u.is_active AND u.department_id=$1 LIMIT 1`,
+      [version.department_id]);
+    const nextStatus = head.rows[0] ? 'SUBMITTED' : 'UNDER_REVIEW';
     const { rows } = await db.query(
-      `UPDATE paper_versions SET status='SUBMITTED', submitted_at=now(), pdf_path=$1, pdf_sha256=$2
-        WHERE id=$3 RETURNING *`, [pdf.relPath, pdf.sha256, versionId]);
+      `UPDATE paper_versions SET status=$1, submitted_at=now(), draft_saved_at=now(),
+              pdf_path=$2, pdf_sha256=$3
+        WHERE id=$4 RETURNING *`, [nextStatus, pdf.relPath, pdf.sha256, versionId]);
     await logAudit({ actorId: facultyId, action: 'PAPER_SUBMITTED', entityType: 'paper_version',
-      entityId: versionId, metadata: { total }, ip }, db);
+      entityId: versionId, metadata: { total, nextStatus }, ip }, db);
+    return rows[0];
+  });
+}
+
+/** Explicitly persist a draft (teachers can do this repeatedly before submitting). */
+async function saveDraft(versionId, facultyId, ip) {
+  return withTransaction(async (db) => {
+    const lock = await db.query(
+      `SELECT v.*, e.course_id, p.created_by AS paper_owner
+         FROM paper_versions v
+         JOIN question_papers p ON p.id=v.paper_id
+         JOIN examinations e ON e.id=p.exam_id
+        WHERE v.id=$1 FOR UPDATE`, [versionId]);
+    const version = lock.rows[0];
+    if (!version) throw new NotFoundError('Paper version not found');
+    if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be saved');
+    await academics.assertFacultyAssigned(facultyId, version.course_id);
+    assertPaperOwner(version, facultyId);
+    const { rows } = await db.query(
+      `UPDATE paper_versions
+          SET draft_saved_at=now(),
+              total_marks=(SELECT coalesce(sum(marks),0) FROM paper_questions WHERE version_id=$1)
+        WHERE id=$1 RETURNING *`, [versionId]);
+    await logAudit({ actorId: facultyId, action: 'PAPER_DRAFT_SAVED', entityType: 'paper_version',
+      entityId: versionId, metadata: { total: Number(rows[0].total_marks) }, ip }, db);
+    return rows[0];
+  });
+}
+
+/** The teacher signs off an approved paper; the controller cannot release before this. */
+async function finalizeVersion(versionId, facultyId, ip) {
+  return withTransaction(async (db) => {
+    const lock = await db.query(
+      `SELECT v.*, e.course_id, p.created_by AS paper_owner
+         FROM paper_versions v
+         JOIN question_papers p ON p.id=v.paper_id
+         JOIN examinations e ON e.id=p.exam_id
+        WHERE v.id=$1 FOR UPDATE`, [versionId]);
+    const version = lock.rows[0];
+    if (!version) throw new NotFoundError('Paper version not found');
+    if (version.status !== 'APPROVED') {
+      throw new ValidationError('Only an approved paper can be finalized');
+    }
+    if (version.is_finalized) throw new ValidationError('This paper is already finalized');
+    await academics.assertFacultyAssigned(facultyId, version.course_id);
+    assertPaperOwner(version, facultyId);
+    const { rows } = await db.query(
+      `UPDATE paper_versions SET is_finalized=true WHERE id=$1 RETURNING *`, [versionId]);
+    await logAudit({ actorId: facultyId, action: 'PAPER_FINALIZED', entityType: 'paper_version',
+      entityId: versionId, metadata: { paperId: version.paper_id }, ip }, db);
     return rows[0];
   });
 }
@@ -289,8 +369,10 @@ async function reviewVersion(versionId, reviewerId, decision, comments, ip) {
     const lock = await db.query('SELECT * FROM paper_versions WHERE id=$1 FOR UPDATE', [versionId]);
     const version = lock.rows[0];
     if (!version) throw new NotFoundError('Paper version not found');
-    if (!['SUBMITTED', 'UNDER_REVIEW'].includes(version.status)) {
-      throw new ValidationError('This version is not awaiting review');
+    // The subject head must approve a submitted paper before it reaches the
+    // reviewer queue, so reviewers only ever act on UNDER_REVIEW versions.
+    if (version.status !== 'UNDER_REVIEW') {
+      throw new ValidationError('This version is not awaiting reviewer approval');
     }
     if (decision === 'APPROVED') {
       try {
@@ -312,6 +394,96 @@ async function reviewVersion(versionId, reviewerId, decision, comments, ip) {
   });
 }
 
+/**
+ * Papers in a department, with the latest head decision, for subject-head and
+ * department-head supervision screens.
+ */
+async function listForHead(departmentId) {
+  const { rows } = await query(
+    `SELECT p.id AS paper_id, p.set_code, p.created_at,
+            e.id AS exam_id, e.name AS exam_name, e.exam_date, e.max_marks, e.status AS exam_status,
+            c.code AS course_code, c.title AS course_title, d.name AS department_name,
+            v.id AS version_id, v.version_no, v.status AS version_status, v.total_marks,
+            v.submitted_at, v.approved_at, v.is_finalized, v.draft_saved_at,
+            u.full_name AS teacher_name,
+            h.decision AS head_decision, h.comments AS head_comments, h.decided_at AS head_decided_at,
+            (SELECT count(*)::int FROM paper_comments pc WHERE pc.paper_id=p.id) AS comment_count
+       FROM question_papers p
+       JOIN examinations e ON e.id=p.exam_id
+       JOIN courses c ON c.id=e.course_id
+       JOIN departments d ON d.id=c.department_id
+       JOIN users u ON u.id=p.created_by
+       LEFT JOIN LATERAL (
+         SELECT * FROM paper_versions pv WHERE pv.paper_id=p.id ORDER BY pv.version_no DESC LIMIT 1
+       ) v ON true
+       LEFT JOIN LATERAL (
+         SELECT hr.decision, hr.comments, hr.decided_at
+           FROM paper_head_reviews hr WHERE hr.version_id=v.id
+          ORDER BY hr.decided_at DESC LIMIT 1
+       ) h ON true
+      WHERE c.department_id=$1
+      ORDER BY e.exam_date DESC, p.set_code`, [departmentId]);
+  return rows;
+}
+
+/**
+ * Subject-head decision. Approval moves the paper into the reviewer queue;
+ * a veto sends it back to the teacher and clears any teacher finalization.
+ * A head may veto SUBMITTED, UNDER_REVIEW or APPROVED versions.
+ */
+async function headReviewVersion(versionId, headId, decision, comments, ip) {
+  if (!['APPROVED', 'VETOED'].includes(decision)) throw new ValidationError('Invalid head review decision');
+  if (decision === 'VETOED' && !(comments || '').trim()) {
+    throw new ValidationError('Explain why you are vetoing this paper');
+  }
+  return withTransaction(async (db) => {
+    const lock = await db.query(
+      `SELECT v.*, p.id AS paper_id, p.created_by AS paper_owner,
+              e.course_id, c.department_id
+         FROM paper_versions v
+         JOIN question_papers p ON p.id=v.paper_id
+         JOIN examinations e ON e.id=p.exam_id
+         JOIN courses c ON c.id=e.course_id
+        WHERE v.id=$1 FOR UPDATE`, [versionId]);
+    const version = lock.rows[0];
+    if (!version) throw new NotFoundError('Paper version not found');
+
+    const head = await db.query(
+      `SELECT u.department_id FROM users u JOIN roles r ON r.id=u.role_id
+        WHERE u.id=$1 AND u.is_active AND r.code = 'SUBJECT_HEAD'`, [headId]);
+    if (!head.rows[0]) throw new ForbiddenError('Only the subject head can approve or veto a paper');
+    if (Number(head.rows[0].department_id) !== Number(version.department_id)) {
+      throw new ForbiddenError('This paper belongs to another department');
+    }
+    if (Number(version.paper_owner) === Number(headId)) {
+      throw new ForbiddenError('You cannot review your own paper');
+    }
+
+    if (decision === 'APPROVED') {
+      if (version.status !== 'SUBMITTED') {
+        throw new ValidationError('Only submitted papers can be approved by the head');
+      }
+    } else if (!['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(version.status)) {
+      throw new ValidationError('This paper can no longer be vetoed');
+    }
+
+    const nextStatus = decision === 'APPROVED' ? 'UNDER_REVIEW' : 'REJECTED';
+    await db.query(
+      `UPDATE paper_versions
+          SET status=$1,
+              is_finalized = CASE WHEN $1 = 'REJECTED' THEN false ELSE is_finalized END
+        WHERE id=$2`, [nextStatus, versionId]);
+    await db.query(
+      `INSERT INTO paper_head_reviews(version_id, head_id, decision, comments)
+       VALUES ($1,$2,$3,$4)`,
+      [versionId, headId, decision, (comments || '').trim() || null]);
+    await logAudit({ actorId: headId, action: decision === 'APPROVED' ? 'PAPER_HEAD_APPROVED' : 'PAPER_HEAD_VETOED',
+      entityType: 'paper_version', entityId: versionId,
+      metadata: { paperId: version.paper_id, comments: (comments || '').slice(0, 500) }, ip }, db);
+    return { ...version, status: nextStatus };
+  });
+}
+
 async function releaseVersion(versionId, controllerId, note, ip) {
   return withTransaction(async (db) => {
     const lock = await db.query(
@@ -321,6 +493,9 @@ async function releaseVersion(versionId, controllerId, note, ip) {
     const version = lock.rows[0];
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'APPROVED') throw new ValidationError('Only approved versions can be released');
+    if (!version.is_finalized) {
+      throw new ValidationError('The subject teacher must finalize this paper before it can be released');
+    }
     if (version.exam_status === 'CLOSED') throw new ValidationError('This examination is closed');
     await db.query(
       `INSERT INTO paper_releases(version_id, released_by, note) VALUES ($1,$2,$3)`,
@@ -365,7 +540,7 @@ async function listForReview() {
        JOIN examinations e ON e.id=p.exam_id
        JOIN courses c ON c.id=e.course_id
        JOIN users u ON u.id=v.created_by
-      WHERE v.status IN ('SUBMITTED','UNDER_REVIEW')
+      WHERE v.status = 'UNDER_REVIEW'
       ORDER BY v.submitted_at ASC NULLS LAST`);
   return rows;
 }
@@ -412,6 +587,10 @@ module.exports = {
   addQuestion,
   removeQuestion,
   submitVersion,
+  saveDraft,
+  finalizeVersion,
+  headReviewVersion,
+  listForHead,
   reviewVersion,
   releaseVersion,
   ensureVersionPdf,

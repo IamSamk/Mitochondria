@@ -9,6 +9,13 @@
   <div class="d-flex gap-2">
     <a class="btn btn-outline-secondary" href="/faculty/papers">Back</a>
     <% if (canEdit) { %><a class="btn btn-primary" href="/faculty/papers/versions/<%= latest.id %>/builder">Edit draft</a><% } %>
+    <% if (canFinalize) { %>
+      <form method="post" action="/faculty/papers/versions/<%= latest.id %>/finalize">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="paperId" value="<%= paper.id %>">
+        <button class="btn btn-success" type="submit">Finalize paper</button>
+      </form>
+    <% } %>
     <% if (canRevise) { %>
       <form method="post" action="/faculty/papers/<%= paper.id %>/revisions">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -41,7 +48,18 @@
       <% } else if (latest.status === 'REJECTED') { %>
         <div class="alert alert-danger mb-0">This version was rejected. Review the reviewer comments below, then start a new version.</div>
       <% } else if (latest.status === 'APPROVED') { %>
-        <div class="alert alert-success mb-0">Approved. The controller can release this version for printing.</div>
+        <% if (latest.is_finalized) { %>
+          <div class="alert alert-success mb-0">Approved and finalized. The controller can release this version for printing.</div>
+        <% } else { %>
+          <div class="alert alert-warning mb-0 d-flex justify-content-between align-items-center">
+            <span>Approved by the reviewer. Finalize the paper to allow the controller to release it.</span>
+            <form method="post" action="/faculty/papers/versions/<%= latest.id %>/finalize" class="m-0">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="paperId" value="<%= paper.id %>">
+              <button class="btn btn-sm btn-success" type="submit">Finalize paper</button>
+            </form>
+          </div>
+        <% } %>
       <% } else if (latest.status === 'RELEASED_FOR_PRINTING') { %>
         <div class="alert alert-primary mb-0">Released for printing<%= release && release.released_at ? ' on ' + new Date(release.released_at).toISOString().slice(0, 10) : '' %>.</div>
       <% } %>
@@ -98,6 +116,19 @@
     <div class="card">
       <div class="card-header fw-semibold">Review trail</div>
       <div class="card-body">
+        <% if (headReviews.length) { %>
+          <div class="small text-muted mb-1">Subject head</div>
+          <% headReviews.forEach(function (h) { %>
+            <div class="border rounded p-2 mb-2">
+              <div class="d-flex justify-content-between">
+                <span class="badge text-bg-<%= h.decision === 'APPROVED' ? 'info' : 'danger' %>"><%= h.decision === 'APPROVED' ? 'HEAD APPROVED' : 'VETOED' %></span>
+                <span class="text-muted small"><%= new Date(h.decided_at).toISOString().slice(0, 16).replace('T', ' ') %></span>
+              </div>
+              <div class="small mt-1">By <%= h.head_name %></div>
+              <% if (h.comments) { %><div class="small mt-1"><%= h.comments %></div><% } %>
+            </div>
+          <% }); %>
+        <% } %>
         <% if (approvals.length) { %>
           <% approvals.forEach(function (a) { %>
             <div class="border rounded p-2 mb-2">
@@ -118,4 +149,14 @@
     </div>
   </div>
 </div>
+
+<%- include('../partials/paper-comments', {
+  paperId: paper.id, comments: comments,
+  returnTo: '/faculty/papers/' + paper.id,
+  versionId: latest ? latest.id : null, questions: questions
+}) %>
+<%- include('../partials/paper-access', {
+  paper: paper, downloadLock: downloadLock, downloadAttempts: downloadAttempts,
+  canManageAccess: true, returnTo: '/faculty/papers/' + paper.id
+}) %>
 <%- include('../partials/footer') %>

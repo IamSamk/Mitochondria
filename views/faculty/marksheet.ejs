@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/marksheets">Marksheets</a></li><li class="breadcrumb-item active"><%= exam.name %></li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= exam.name %></h1>
+    <p class="text-muted mb-0"><%= exam.course_code %> — <%= exam.course_title %> &middot; <%= String(exam.exam_date).slice(0, 10) %> &middot; out of <%= Number(exam.max_marks) %></p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/faculty/marksheets">Back</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <% [['Students', counts.students], ['Marks entered', counts.entered], ['Pending', counts.pending], ['Average', counts.average]].forEach(function (c) { %>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small"><%= c[0] %></div><div class="display-6"><%= c[1] %></div></div></div></div>
+  <% }); %>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Enter or edit marks</div>
+  <form method="post" action="/faculty/marksheets/<%= exam.id %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Student</th><th>Name</th><th style="width: 180px">Marks / <%= Number(exam.max_marks) %></th><th>Last saved</th></tr></thead>
+        <tbody>
+        <% students.forEach(function (s) { %>
+          <tr class="<%= s.is_active ? '' : 'table-light text-muted' %>">
+            <td class="fw-semibold"><%= s.student_code %><% if (!s.is_active) { %> <span class="badge text-bg-secondary">inactive</span><% } %></td>
+            <td><%= s.full_name %></td>
+            <td>
+              <input class="form-control form-control-sm" type="number" step="0.01" min="0" max="<%= Number(exam.max_marks) %>"
+                     name="mark_<%= s.id %>" value="<%= s.marks_obtained !== null && s.marks_obtained !== undefined ? Number(s.marks_obtained) : '' %>"
+                     <%= s.is_active ? '' : 'disabled' %> placeholder="—">
+            </td>
+            <td class="small text-muted">
+              <%= s.updated_at ? new Date(s.updated_at).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '—' %>
+              <% if (s.updated_by_name) { %><div><%= s.updated_by_name %></div><% } %>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!students.length) { %><tr><td colspan="4" class="text-center text-muted py-4">No students registered in this department.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <span class="text-muted small">Clearing a field removes that student's saved mark. You can save again any time.</span>
+      <button class="btn btn-primary" type="submit">Save marksheet</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Import a CSV</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/marksheets/<%= exam.id %>/import" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="csv">Paste rows</label>
+          <textarea class="form-control font-monospace" id="csv" name="csv" rows="5" placeholder="student_code,marks&#10;S2026001,42&#10;S2026002,38"></textarea>
+          <div class="form-text">Header row optional. Separators: comma, semicolon, or tab.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="file">Or upload a CSV file</label>
+          <input class="form-control" id="file" name="file" type="file" accept=".csv,.txt,text/csv">
+          <div class="form-text">Maximum 2 MB. Valid rows are saved; invalid rows are reported.</div>
+        </div>
+      </div>
+      <button class="btn btn-outline-primary mt-3" type="submit">Import marks</button>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

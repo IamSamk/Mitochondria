@@ -1,0 +1,69 @@
+<% if (typeof downloadLock !== 'undefined') { %>
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Download access</span>
+    <% if (downloadLock) { %>
+      <span class="badge text-bg-danger">Frozen until <%= new Date(downloadLock.locked_until).toISOString().slice(0, 16).replace('T', ' ') %> UTC</span>
+    <% } else { %>
+      <span class="badge text-bg-success">Open</span>
+    <% } %>
+  </div>
+  <div class="card-body">
+    <% if (downloadLock) { %>
+      <div class="alert alert-danger">
+        Downloads are frozen for 15 minutes: <%= downloadLock.reason || 'unauthorised access attempt' %>.
+        <% if (downloadLock.locked_by_name) { %>The last attempt was by <strong><%= downloadLock.locked_by_name %></strong>.<% } %>
+      </div>
+      <% if (typeof canManageAccess !== 'undefined' && canManageAccess) { %>
+        <form method="post" action="/papers/<%= paper.id %>/lock/clear" class="mb-3">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="returnTo" value="<%= returnTo %>">
+          <button class="btn btn-sm btn-outline-danger" type="submit">Clear freeze after review</button>
+        </form>
+      <% } %>
+    <% } else { %>
+      <p class="text-muted small mb-3">Anyone other than the subject teacher who tries to download this paper is recorded here and freezes downloads for 15 minutes.</p>
+    <% } %>
+
+    <% if (downloadAttempts && downloadAttempts.length) { %>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>When</th><th>User</th><th>Role</th><th>Outcome</th><th>IP</th></tr></thead>
+          <tbody>
+          <% downloadAttempts.forEach(function (a) { %>
+            <tr>
+              <td class="text-nowrap small"><%= new Date(a.created_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+              <td><%= a.user_name || 'Unknown' %><% if (a.user_email) { %><div class="small text-muted"><%= a.user_email %></div><% } %></td>
+              <td><%= a.user_role ? a.user_role.replaceAll('_', ' ') : '—' %></td>
+              <td><span class="badge text-bg-<%= a.outcome === 'DENIED' ? 'danger' : a.outcome === 'BAD_PASSWORD' ? 'warning' : 'secondary' %>"><%= a.outcome.replaceAll('_', ' ') %></span></td>
+              <td class="small text-muted"><%= a.ip_address || '—' %></td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p class="text-muted small mb-3">No unauthorised attempts recorded.</p>
+    <% } %>
+
+    <% if (typeof canManageAccess !== 'undefined' && canManageAccess) { %>
+      <form method="post" action="/papers/<%= paper.id %>/password" class="row g-2 align-items-end">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="returnTo" value="<%= returnTo %>">
+        <div class="col-md-6">
+          <label class="form-label small" for="downloadPassword">
+            Optional download password
+            <% if (paper.download_password_hash) { %><span class="badge text-bg-success ms-1">set</span><% } %>
+          </label>
+          <input class="form-control form-control-sm" id="downloadPassword" name="password" type="password"
+                 minlength="6" maxlength="100" placeholder="<%= paper.download_password_hash ? 'Enter a new password to replace it' : 'At least 6 characters' %>">
+          <div class="form-text">Non-owners must supply this password. Leave blank to remove it.</div>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-sm btn-outline-primary" type="submit">Save password</button>
+        </div>
+      </form>
+    <% } %>
+  </div>
+</div>
+<% } %>

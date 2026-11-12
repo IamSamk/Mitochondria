@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Seating &amp; Invigilation</h1>
+    <p class="text-muted mb-0">Generate a seating chart and invigilation schedule for an exam in one click, then edit any row.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Examinations in your courses</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Students seated</th><th>Rooms</th><th>Invigilators</th><th></th></tr></thead>
+      <tbody>
+      <% exams.forEach(function (e) { %>
+        <tr>
+          <td class="fw-semibold"><%= e.name %></td>
+          <td><%= e.course_code %> — <%= e.course_title %></td>
+          <td class="text-nowrap"><%= String(e.exam_date).slice(0, 10) %></td>
+          <td><%= e.seat_count %></td>
+          <td><%= e.room_count %></td>
+          <td><%= e.invigilation_count %></td>
+          <td class="text-end"><a class="btn btn-sm btn-primary" href="/faculty/logistics/<%= e.id %>">Open plan</a></td>
+        </tr>
+      <% }); %>
+      <% if (!exams.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No examinations in your assigned courses yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

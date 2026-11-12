@@ -7,12 +7,13 @@ const { asyncHandler } = require('../../middleware/async.middleware');
 const { setFlash } = require('../../middleware/flash.middleware');
 const { NotFoundError, ValidationError } = require('../../config/errors');
 const papers = require('../question-papers/question-papers.service');
+const collab = require('../paper-collab/paper-collab.service');
 const approvals = require('./approvals.service');
 
 const router = express.Router();
 router.use(requireAuth, requireRole('REVIEWER'));
 
-const REVIEWABLE = ['SUBMITTED', 'UNDER_REVIEW'];
+const REVIEWABLE = ['UNDER_REVIEW'];
 const DOWNLOADABLE = ['SUBMITTED', 'UNDER_REVIEW', 'REJECTED', 'APPROVED', 'RELEASED_FOR_PRINTING'];
 const errorsOf = (req) => validationResult(req).array().map((e) => e.msg);
 
@@ -26,8 +27,9 @@ router.get('/', asyncHandler(async (req, res) => {
 
 router.get('/:versionId', asyncHandler(async (req, res) => {
   const version = await papers.getVersionDetail(req.params.versionId);
+  const comments = await collab.listComments(version.paper_id);
   res.render('reviewer/paper-detail', {
-    version,
+    version, comments,
     reviewable: REVIEWABLE.includes(version.status),
     title: `Review set ${version.set_code} v${version.version_no}`
   });
@@ -60,7 +62,8 @@ router.get('/:versionId/download', asyncHandler(async (req, res) => {
   if (!DOWNLOADABLE.includes(version.status)) {
     throw new ValidationError('This paper is not available for review');
   }
-  const { detail, absPath } = await papers.ensureVersionPdf(req.params.versionId);
+  const { detail, absPath } = await collab.requestDownload(
+    req.params.versionId, req.session.user, { password: req.query.password || '' }, req.ip);
   if (!fs.existsSync(absPath)) throw new NotFoundError('The paper PDF could not be generated');
   res.download(absPath, `paper-${detail.set_code}-v${detail.version_no}.pdf`);
 }));

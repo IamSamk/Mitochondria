@@ -50,6 +50,7 @@ describe('full examination lifecycle through the UI routes', () => {
     const controller = await signedIn('controller@college.test');
     const faculty = await signedIn('faculty1@college.test');
     const reviewer = await signedIn('reviewer@college.test');
+    const subjectHead = await signedIn('subjecthead@college.test');
     const printing = await signedIn('printing@college.test');
     const verifier = await signedIn('verifier@college.test');
 
@@ -109,7 +110,14 @@ describe('full examination lifecycle through the UI routes', () => {
     expectPdf(await faculty.agent.get(`/faculty/papers/versions/${versionId}/download`)
       .buffer(true).parse(binaryParser));
 
-    // --- Reviewer approves, controller releases, printing downloads ----
+    // --- Subject head approves before the reviewer sees it ---------------
+    expect((await subjectHead.agent.get('/head/papers')).text).toContain(examName);
+    const headApprove = await subjectHead.agent.post(`/head/papers/${versionId}/head-review`).type('form')
+      .send({ _csrf: subjectHead.csrf, decision: 'APPROVED', comments: 'Head approval in integration test.' });
+    expect(headApprove.status).toBe(302);
+    await expectStatus('paper_versions', versionId, 'UNDER_REVIEW');
+
+    // --- Reviewer approves, teacher finalizes, controller releases ------
     expect((await reviewer.agent.get('/reviewer/papers')).text).toContain(examName);
     expectPdf(await reviewer.agent.get(`/reviewer/papers/${versionId}/download`)
       .buffer(true).parse(binaryParser));
@@ -117,6 +125,17 @@ describe('full examination lifecycle through the UI routes', () => {
       .send({ _csrf: reviewer.csrf, decision: 'APPROVED', comments: 'Approved in integration test.' });
     expect(approve.status).toBe(302);
     await expectStatus('paper_versions', versionId, 'APPROVED');
+
+    // Releasing before the teacher finalizes must be refused.
+    const earlyRelease = await controller.agent.post(`/controller/papers/${versionId}/release`).type('form')
+      .send({ _csrf: controller.csrf, note: 'Too early' });
+    expect(earlyRelease.status).toBe(302);
+    await expectStatus('paper_versions', versionId, 'APPROVED');
+
+    const finalizePaper = await faculty.agent.post(`/faculty/papers/versions/${versionId}/finalize`).type('form')
+      .send({ _csrf: faculty.csrf, paperId });
+    expect(finalizePaper.status).toBe(302);
+    expect((await query('SELECT is_finalized FROM paper_versions WHERE id = $1', [versionId])).rows[0].is_finalized).toBe(true);
 
     const release = await controller.agent.post(`/controller/papers/${versionId}/release`).type('form')
       .send({ _csrf: controller.csrf, note: 'Integration release' });
@@ -247,6 +266,9 @@ describe('full examination lifecycle through the UI routes', () => {
       .send({ _csrf: faculty.csrf, questionId: question.id, sectionTitle: 'Section A' })).status).toBe(302);
     expect((await faculty.agent.post(`/faculty/papers/versions/${versionB1}/submit`).type('form')
       .send({ _csrf: faculty.csrf })).status).toBe(302);
+    await expectStatus('paper_versions', versionB1, 'SUBMITTED');
+    expect((await subjectHead.agent.post(`/head/papers/${versionB1}/head-review`).type('form')
+      .send({ _csrf: subjectHead.csrf, decision: 'APPROVED', comments: 'Head approved set B.' })).status).toBe(302);
 
     const reject = await reviewer.agent.post(`/reviewer/papers/${versionB1}/decision`).type('form')
       .send({ _csrf: reviewer.csrf, decision: 'REJECTED', comments: 'Tighten the wording.' });
@@ -266,8 +288,12 @@ describe('full examination lifecycle through the UI routes', () => {
       .toContain(questionBody);
     expect((await faculty.agent.post(`/faculty/papers/versions/${versionB2}/submit`).type('form')
       .send({ _csrf: faculty.csrf })).status).toBe(302);
+    expect((await subjectHead.agent.post(`/head/papers/${versionB2}/head-review`).type('form')
+      .send({ _csrf: subjectHead.csrf, decision: 'APPROVED', comments: 'Revision approved by head.' })).status).toBe(302);
     expect((await reviewer.agent.post(`/reviewer/papers/${versionB2}/decision`).type('form')
       .send({ _csrf: reviewer.csrf, decision: 'APPROVED', comments: 'Revision accepted.' })).status).toBe(302);
+    expect((await faculty.agent.post(`/faculty/papers/versions/${versionB2}/finalize`).type('form')
+      .send({ _csrf: faculty.csrf, paperId: paperBRow.paper_id })).status).toBe(302);
     expect((await controller.agent.post(`/controller/papers/${versionB2}/release`).type('form')
       .send({ _csrf: controller.csrf, note: 'Release revision' })).status).toBe(302);
     expect((await printing.agent.get('/printing/papers')).text).toContain(examName);

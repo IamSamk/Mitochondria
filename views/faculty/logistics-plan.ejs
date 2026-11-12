@@ -1,0 +1,122 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/logistics">Seating &amp; Invigilation</a></li><li class="breadcrumb-item active"><%= exam.name %></li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h3 mb-1"><%= exam.name %></h1>
+    <p class="text-muted mb-0"><%= exam.course_code %> — <%= exam.course_title %> &middot; <%= String(exam.exam_date).slice(0, 10) %> &middot; <%= exam.duration_minutes %> minutes</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="/faculty/logistics">Back</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Generate seating</div>
+      <div class="card-body">
+        <p class="text-muted small">Seats every active student in the department, split across rooms by capacity. Regenerating replaces the current chart.</p>
+        <form method="post" action="/faculty/logistics/<%= exam.id %>/seating/generate" class="row g-2 align-items-end">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="col-sm-5">
+            <label class="form-label" for="roomName">First room name</label>
+            <input class="form-control" id="roomName" name="roomName" value="Room 1" maxlength="80">
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label" for="capacity">Seats per room</label>
+            <input class="form-control" id="capacity" name="capacity" type="number" min="1" max="500" value="30">
+          </div>
+          <div class="col-sm-3"><button class="btn btn-primary w-100" type="submit">Generate</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Generate invigilation</div>
+      <div class="card-body">
+        <p class="text-muted small">Assigns active department faculty to the rooms already holding seating. Generate seating first.</p>
+        <form method="post" action="/faculty/logistics/<%= exam.id %>/invigilation/generate">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-primary" type="submit" <%= rooms.length ? '' : 'disabled' %>>Generate schedule</button>
+          <% if (!rooms.length) { %><span class="small text-muted ms-2">No rooms yet.</span><% } %>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Seating arrangement</span>
+    <span class="badge text-bg-secondary"><%= seating.length %> seat(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Student</th><th style="width: 220px">Room</th><th style="width: 140px">Seat</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      <% seating.forEach(function (s) { %>
+        <tr>
+          <td><div class="fw-semibold"><%= s.student_code %></div><div class="small text-muted"><%= s.student_name %></div></td>
+          <td colspan="2">
+            <form method="post" action="/faculty/logistics/<%= exam.id %>/seating/<%= s.id %>" class="d-flex gap-2">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input class="form-control form-control-sm" name="roomName" value="<%= s.room_name %>" maxlength="80" aria-label="Room">
+              <input class="form-control form-control-sm" name="seatNo" type="number" min="1" value="<%= s.seat_no %>" aria-label="Seat number">
+              <button class="btn btn-sm btn-outline-secondary text-nowrap" type="submit">Save</button>
+            </form>
+          </td>
+          <td class="text-end">
+            <form method="post" action="/faculty/logistics/<%= exam.id %>/seating/<%= s.id %>/delete">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!seating.length) { %><tr><td colspan="4" class="text-center text-muted py-4">No seating generated yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Invigilation schedule</span>
+    <span class="badge text-bg-secondary"><%= invigilations.length %> assignment(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Room</th><th>Invigilator</th><th>Starts</th><th>Ends</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      <% invigilations.forEach(function (i) { %>
+        <tr>
+          <td colspan="4">
+            <form method="post" action="/faculty/logistics/<%= exam.id %>/invigilation/<%= i.id %>" class="row g-2 align-items-center">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="col-md-3"><input class="form-control form-control-sm" name="roomName" value="<%= i.room_name %>" aria-label="Room"></div>
+              <div class="col-md-3">
+                <select class="form-select form-select-sm" name="invigilatorId" aria-label="Invigilator">
+                  <% faculty.forEach(function (f) { %>
+                    <option value="<%= f.id %>" <%= Number(f.id) === Number(i.invigilator_id) ? 'selected' : '' %>><%= f.full_name %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="col-md-3"><input class="form-control form-control-sm" name="startsAt" type="datetime-local" value="<%= i.starts_at ? new Date(i.starts_at).toISOString().slice(0, 16) : '' %>" aria-label="Starts"></div>
+              <div class="col-md-3"><input class="form-control form-control-sm" name="endsAt" type="datetime-local" value="<%= i.ends_at ? new Date(i.ends_at).toISOString().slice(0, 16) : '' %>" aria-label="Ends"></div>
+              <div class="col-12 text-end"><button class="btn btn-sm btn-outline-secondary" type="submit">Save assignment</button></div>
+            </form>
+          </td>
+          <td class="text-end align-top">
+            <form method="post" action="/faculty/logistics/<%= exam.id %>/invigilation/<%= i.id %>/delete">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!invigilations.length) { %><tr><td colspan="5" class="text-center text-muted py-4">No invigilation generated yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

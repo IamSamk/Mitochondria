@@ -1,0 +1,50 @@
+<% if (typeof comments !== 'undefined') { %>
+<div class="card mt-3">
+  <div class="card-header fw-semibold">Discussion</div>
+  <div class="card-body">
+    <% if (comments.length) { %>
+      <% comments.forEach(function (c) { %>
+        <div class="border rounded p-2 mb-2">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="small">
+              <span class="fw-semibold"><%= c.author_name %></span>
+              <span class="badge text-bg-light border ms-1"><%= c.author_role.replaceAll('_', ' ') %></span>
+              <% if (c.question_no) { %><span class="badge text-bg-warning ms-1">Q<%= c.question_no %></span><% } %>
+            </div>
+            <span class="text-muted small text-nowrap"><%= new Date(c.created_at).toISOString().slice(0, 16).replace('T', ' ') %></span>
+          </div>
+          <div class="small mt-1" style="white-space: pre-wrap"><%= c.body %></div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <p class="text-muted mb-3">No comments yet. Use this thread to discuss the paper or a particular question.</p>
+    <% } %>
+
+    <form method="post" action="/papers/<%= paperId %>/comments">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="returnTo" value="<%= returnTo %>">
+      <% if (typeof versionId !== 'undefined' && versionId) { %>
+        <input type="hidden" name="versionId" value="<%= versionId %>">
+      <% } %>
+      <div class="row g-2">
+        <% if (typeof questions !== 'undefined' && questions && questions.length) { %>
+          <div class="col-md-4">
+            <label class="form-label small" for="paperQuestionId">About</label>
+            <select class="form-select form-select-sm" id="paperQuestionId" name="paperQuestionId">
+              <option value="">Whole paper</option>
+              <% questions.forEach(function (q) { %>
+                <option value="<%= q.id %>">Q<%= q.display_no %> — <%= q.body.length > 60 ? q.body.slice(0, 60) + '…' : q.body %></option>
+              <% }); %>
+            </select>
+          </div>
+        <% } %>
+        <div class="<%= (typeof questions !== 'undefined' && questions && questions.length) ? 'col-md-8' : 'col-12' %>">
+          <label class="form-label small" for="commentBody">Comment</label>
+          <textarea class="form-control" id="commentBody" name="body" rows="3" maxlength="5000" required placeholder="Write a comment for the subject teacher or reviewer…"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary mt-2" type="submit">Post comment</button>
+    </form>
+  </div>
+</div>
+<% } %>

@@ -12,7 +12,9 @@
   </div>
 </div>
 
-<% if (version.status === 'APPROVED') { %>
+<% if (version.status === 'SUBMITTED') { %>
+  <div class="alert alert-info">This paper is waiting for subject-head approval. It will enter the reviewer queue afterwards.</div>
+<% } else if (version.status === 'APPROVED') { %>
   <div class="alert alert-success">This version was approved<%= version.approved_at ? ' on ' + new Date(version.approved_at).toISOString().slice(0, 10) : '' %>. It is waiting for the controller to release it.</div>
 <% } else if (version.status === 'RELEASED_FOR_PRINTING') { %>
   <div class="alert alert-primary">This version has been released for printing.</div>
@@ -62,6 +64,19 @@
     <div class="card">
       <div class="card-header fw-semibold">Review trail</div>
       <div class="card-body">
+        <% if (version.headReviews && version.headReviews.length) { %>
+          <div class="small text-muted mb-1">Subject head</div>
+          <% version.headReviews.forEach(function (h) { %>
+            <div class="border rounded p-2 mb-2">
+              <div class="d-flex justify-content-between">
+                <span class="badge text-bg-<%= h.decision === 'APPROVED' ? 'info' : 'danger' %>"><%= h.decision === 'APPROVED' ? 'HEAD APPROVED' : 'VETOED' %></span>
+                <span class="text-muted small"><%= new Date(h.decided_at).toISOString().slice(0, 16).replace('T', ' ') %></span>
+              </div>
+              <div class="small mt-1">By <%= h.head_name %></div>
+              <% if (h.comments) { %><div class="small mt-1"><%= h.comments %></div><% } %>
+            </div>
+          <% }); %>
+        <% } %>
         <% if (version.approvals.length) { %>
           <% version.approvals.forEach(function (a) { %>
             <div class="border rounded p-2 mb-2">
@@ -99,4 +114,10 @@
     </div>
   </div>
 </div>
+
+<%- include('../partials/paper-comments', {
+  paperId: version.paper_id, comments: comments,
+  returnTo: '/reviewer/papers/' + version.id,
+  versionId: version.id, questions: version.questions
+}) %>
 <%- include('../partials/footer') %>

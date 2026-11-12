@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Department Marksheets</h1>
+    <p class="text-muted mb-0">Read-only supervision of marks entered by subject teachers.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Examinations in your department</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Course</th><th>Date</th><th>Max marks</th><th>Students</th><th>Entered</th><th>Pending</th><th></th></tr></thead>
+      <tbody>
+      <% sheets.forEach(function (s) { %>
+        <tr>
+          <td class="fw-semibold"><%= s.name %></td>
+          <td><%= s.course_code %> — <%= s.course_title %></td>
+          <td class="text-nowrap"><%= String(s.exam_date).slice(0, 10) %></td>
+          <td><%= Number(s.max_marks) %></td>
+          <td><%= s.student_count %></td>
+          <td><%= s.marks_count %></td>
+          <td><%= Math.max(0, s.student_count - s.marks_count) %></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/head/marksheets/<%= s.id %>">View</a></td>
+        </tr>
+      <% }); %>
+      <% if (!sheets.length) { %><tr><td colspan="8" class="text-center text-muted py-4">No examinations in this department yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>
