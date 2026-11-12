@@ -104,6 +104,7 @@ app.use('/faculty/questions', require('./modules/questions/questions.routes'));
 app.use('/faculty/papers', require('./modules/question-papers/faculty.routes'));
 app.use('/faculty/marksheets', require('./modules/marksheets/marksheets.routes'));
 app.use('/faculty/logistics', require('./modules/logistics/logistics.routes'));
+app.use('/faculty/seating-templates', require('./modules/seating-templates/seating-templates.routes'));
 app.use('/faculty/evaluations', require('./modules/evaluations/faculty.routes'));
 app.use('/reviewer/papers', require('./modules/approvals/approvals.routes'));
 app.use('/printing/papers', require('./modules/printing/printing.routes'));
@@ -112,6 +113,8 @@ app.use('/head', require('./modules/supervision/supervision.routes'));
 app.use('/papers', require('./modules/paper-collab/paper-collab.routes'));
 app.use('/notifications', require('./modules/notifications/notifications.routes'));
 app.use('/student', require('./modules/student-portal/student-portal.routes'));
+app.use('/announcements', require('./modules/announcements/announcements.routes'));
+app.use('/', require('./modules/revaluation/revaluation.routes'));
 
 // 404
 app.use((req, res) => res.status(404).render('errors/error', { status: 404, message: 'Page not found' }));

@@ -41,7 +41,27 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.post('/:id/finalize', asyncHandler(async (req, res) => {
   try {
-    await evaluations.finalizeEvaluation(req.params.id, req.session.user.id, req.ip);
+    const ev = await evaluations.finalizeEvaluation(req.params.id, req.session.user.id, req.ip);
+    // Notify the linked student, if any.
+    try {
+      const { query } = require('../../config/database');
+      const { rows } = await query(
+        `SELECT st.user_id, e.name AS exam_name FROM evaluations ev
+           JOIN answer_scripts s ON s.id = ev.script_id
+           JOIN students st ON st.id = s.student_id
+           JOIN examinations e ON e.id = s.exam_id
+          WHERE ev.id = $1`, [req.params.id]);
+      const r = rows[0];
+      if (r && r.user_id) {
+        const notifications = require('../notifications/notifications.service');
+        await notifications.notify([r.user_id], {
+          type: 'RESULT_PUBLISHED',
+          title: `Result published: ${r.exam_name}`,
+          body: 'Your marks have been finalized. View your result in the student portal.',
+          link: '/student/results'
+        });
+      }
+    } catch (e) { /* non-fatal */ }
     setFlash(req, 'success', 'Marks finalized.');
   } catch (e) {
     if (!e.status || e.status >= 500) throw e;

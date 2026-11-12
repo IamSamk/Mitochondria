@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Seating Templates</h1><p class="text-muted mb-0">Create reusable room grids (up to 100×100) for optimal seating generation.</p></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Create template</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/seating-templates/templates" class="row g-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-4"><label class="form-label" for="name">Name</label><input class="form-control" id="name" name="name" required maxlength="120"></div>
+      <div class="col-md-3"><label class="form-label" for="rows">Rows</label><input class="form-control" id="rows" name="rows" type="number" min="1" max="100" value="10" required></div>
+      <div class="col-md-3"><label class="form-label" for="cols">Columns</label><input class="form-control" id="cols" name="cols" type="number" min="1" max="100" value="10" required></div>
+      <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Create</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">My templates</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Name</th><th>Rows</th><th>Cols</th><th>Capacity</th><th></th></tr></thead>
+      <tbody>
+      <% templates.forEach(function(t){ %>
+        <tr>
+          <td class="fw-semibold"><%= t.name %></td>
+          <td><%= t.rows %></td>
+          <td><%= t.cols %></td>
+          <td><%= t.rows * t.cols %></td>
+          <td class="text-end">
+            <form method="post" action="/faculty/seating-templates/templates/<%= t.id %>/delete">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if(!templates.length){ %><tr><td colspan="5" class="text-center text-muted py-4">No templates yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

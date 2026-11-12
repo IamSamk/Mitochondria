@@ -1,0 +1,61 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/faculty/logistics">Seating &amp; Invigilation</a></li><li class="breadcrumb-item active"><%= exam.name %> — template seating</li></ol></nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h1 class="h3 mb-1"><%= exam.name %></h1><p class="text-muted mb-0"><%= exam.course_code %> — <%= exam.course_title %></p></div>
+  <a class="btn btn-outline-secondary" href="/faculty/logistics">Back</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Add room instance</div>
+  <div class="card-body">
+    <form method="post" action="/faculty/seating-templates/plans/<%= exam.id %>/rooms" class="row g-3">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="col-md-5">
+        <label class="form-label" for="templateId">Template</label>
+        <select class="form-select" id="templateId" name="templateId" required>
+          <% templates.forEach(function(t){ %><option value="<%= t.id %>"><%= t.name %> (<%= t.rows %>×<%= t.cols %>)</option><% }); %>
+        </select>
+      </div>
+      <div class="col-md-4"><label class="form-label" for="roomNumber">Room number</label><input class="form-control" id="roomNumber" name="roomNumber" required maxlength="40"></div>
+      <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Add room</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Room instances</span>
+    <form method="post" action="/faculty/seating-templates/plans/<%= exam.id %>/generate">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-success btn-sm" type="submit" <%= instances.length ? '' : 'disabled' %>>Generate optimal seating</button>
+    </form>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Room</th><th>Template</th><th>Rows</th><th>Cols</th><th>Capacity</th></tr></thead>
+      <tbody>
+      <% instances.forEach(function(i){ %>
+        <tr><td class="fw-semibold"><%= i.room_number %></td><td><%= i.template_name %></td><td><%= i.rows %></td><td><%= i.cols %></td><td><%= i.rows*i.cols %></td></tr>
+      <% }); %>
+      <% if(!instances.length){ %><tr><td colspan="5" class="text-center text-muted py-4">No rooms added yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">Generated seating</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Student</th><th>Room</th><th>Seat</th><th>Row</th><th>Col</th></tr></thead>
+      <tbody>
+      <% seating.forEach(function(s){ %>
+        <tr><td class="fw-semibold"><%= s.student_code %></td><td><%= s.room_name %></td><td><%= s.seat_no %></td><td><%= s.row_no %></td><td><%= s.col_no %></td></tr>
+      <% }); %>
+      <% if(!seating.length){ %><tr><td colspan="5" class="text-center text-muted py-4">No seating generated yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

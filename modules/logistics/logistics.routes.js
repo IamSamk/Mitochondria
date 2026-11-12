@@ -38,6 +38,23 @@ router.post('/:examId/seating/generate', asyncHandler(async (req, res) => {
       roomName: req.body.roomName,
       capacity: req.body.capacity
     }, req.session.user, req.ip);
+    // Notify students with accounts in this exam's department.
+    try {
+      const { query } = require('../../config/database');
+      const { rows } = await query(
+        `SELECT DISTINCT st.user_id
+           FROM seating_allocations sa
+           JOIN students st ON st.id = sa.student_id
+          WHERE sa.exam_id = $1 AND st.user_id IS NOT NULL`, [req.params.examId]);
+      const exam = await logistics.examContext(req.params.examId);
+      const notifications = require('../notifications/notifications.service');
+      await notifications.notify(rows.map((r) => r.user_id), {
+        type: 'SEAT_ASSIGNED',
+        title: `Seat assigned: ${exam.name}`,
+        body: 'Your examination seat has been allocated. Check My Seat.',
+        link: '/student/seat'
+      });
+    } catch (e) { /* non-fatal */ }
     setFlash(req, 'success', `Generated ${result.students} seats across ${result.rooms} room(s). Edit any row below.`);
   } catch (e) {
     if (!e.status || e.status >= 500) throw e;

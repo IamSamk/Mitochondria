@@ -23,7 +23,7 @@ if (isConfigured) {
     connectionString,
     ssl: sslFor(connectionString),
     // Serverless functions run many short-lived instances: keep each one's pool tiny.
-    max: isServerless ? 3 : 10,
+    max: isServerless ? 3 : 20,
     idleTimeoutMillis: isServerless ? 10_000 : 30_000,
     connectionTimeoutMillis: 10_000,
     // Store/read all timestamps as UTC (set at connection startup, no extra query).

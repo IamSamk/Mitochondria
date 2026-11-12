@@ -1,0 +1,54 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h1 class="h3 mb-1">Revaluation</h1></div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header fw-semibold">Open revaluation windows</div>
+  <div class="card-body">
+    <% if (windows.length) { %>
+      <form method="post" action="/student/revaluation">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="examId">Exam</label>
+            <select class="form-select" id="examId" name="examId" required>
+              <% windows.forEach(function(w){ %>
+                <option value="<%= w.exam_id %>"><%= w.exam_name %> (closes <%= new Date(w.closes_at).toISOString().slice(0,10) %>)</option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label" for="reason">Reason</label>
+            <textarea class="form-control" id="reason" name="reason" rows="2" required minlength="5" maxlength="2000"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary mt-3" type="submit">Submit request</button>
+      </form>
+    <% } else { %>
+      <p class="text-muted mb-0">No open revaluation windows right now.</p>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold">My requests</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Exam</th><th>Status</th><th>Old marks</th><th>New marks</th><th>Submitted</th></tr></thead>
+      <tbody>
+      <% requests.forEach(function(r){ %>
+        <tr>
+          <td class="fw-semibold"><%= r.exam_name %></td>
+          <td><%= r.status %></td>
+          <td><%= r.old_marks !== null ? Number(r.old_marks) : '—' %></td>
+          <td><%= r.new_marks !== null ? Number(r.new_marks) : '—' %></td>
+          <td class="small"><%= new Date(r.created_at).toISOString().slice(0,10) %></td>
+        </tr>
+      <% }); %>
+      <% if(!requests.length){ %><tr><td colspan="5" class="text-center text-muted py-4">No requests yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>
