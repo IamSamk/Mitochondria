@@ -9,7 +9,7 @@
 <% if (cards && cards.length) { %>
 <div class="row g-3 mb-4">
   <% cards.forEach(function (card) { %>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-lg-4 col-xl">
       <a class="card h-100 text-decoration-none text-reset dashboard-card" href="<%= card.href %>">
         <div class="card-body">
           <div class="text-muted small"><%= card.label %></div>

@@ -16,17 +16,18 @@ router.use(requireAuth, requireRole('VERIFIER'));
 const errorsOf = (req) => validationResult(req).array().map((e) => e.msg);
 
 router.get('/', asyncHandler(async (req, res) => {
-  const list = await evaluations.listEvaluations({
+  const filters = {
     status: req.query.status || '',
     examId: req.query.examId || '',
     q: (req.query.q || '').trim()
-  });
-  const counts = list.reduce((acc, row) => {
-    acc[row.status] = (acc[row.status] || 0) + 1;
-    return acc;
-  }, {});
+  };
+  const [list, counts, exams] = await Promise.all([
+    evaluations.listEvaluations(filters),
+    evaluations.countEvaluationsByStatus(filters),
+    evaluations.examOptions()
+  ]);
   res.render('verifier/marks', {
-    evaluations: list, counts, filters: req.query,
+    evaluations: list, counts, exams, filters: req.query,
     title: 'Marks to Verify'
   });
 }));

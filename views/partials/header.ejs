@@ -21,10 +21,13 @@
   <div class="flex-grow-1">
     <header class="topbar d-flex justify-content-between align-items-center px-4 py-2">
       <span class="text-muted"><%= currentUser.fullName %> &middot; <span class="badge text-bg-secondary"><%= currentUser.role %></span></span>
-      <form method="post" action="/logout" class="m-0">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button class="btn btn-sm btn-outline-secondary" type="submit">Log out</button>
-      </form>
+      <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-sm btn-outline-secondary" href="/account">My account</a>
+        <form method="post" action="/logout" class="m-0">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-sm btn-outline-secondary" type="submit">Log out</button>
+        </form>
+      </div>
     </header>
     <main class="p-4">
       <%- include('alerts') %>

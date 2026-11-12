@@ -81,7 +81,9 @@ app.use(csrfProtect);
 // Module route registration -- each module exports an Express router.
 app.use('/', require('./modules/auth/auth.routes'));
 app.use('/', require('./modules/dashboard.routes'));
+app.use('/account', require('./modules/account/account.routes'));
 app.use('/admin/users', require('./modules/users/users.routes'));
+app.use('/admin/students', require('./modules/students/students.routes'));
 app.use('/admin/academics', require('./modules/academics/academics.routes'));
 app.use('/admin/audit', require('./modules/audit/audit.routes'));
 app.use('/controller/exams', require('./modules/examinations/examinations.routes'));

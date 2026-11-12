@@ -14,14 +14,20 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/verifier/marks">
-  <div class="col-md-5"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
-  <div class="col-md-4">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="examId">
+      <option value="">All examinations</option>
+      <% exams.forEach(function (e) { %><option value="<%= e.id %>" <%= String(filters.examId) === String(e.id) ? 'selected' : '' %>><%= e.name %> (<%= String(e.exam_date).slice(0, 10) %>)</option><% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
     <select class="form-select" name="status">
       <option value="">All statuses</option>
       <% ['DRAFT', 'SUBMITTED', 'VERIFIED', 'FINALIZED', 'REOPENED'].forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s %></option><% }); %>
     </select>
   </div>
-  <div class="col-md-3"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
 </form>
 
 <div class="card">

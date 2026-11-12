@@ -7,6 +7,8 @@ Legend: ✔ allowed, own = only own records / assigned courses, — denied.
 | Capability | Admin | Controller | Faculty | Reviewer | Printing | Verifier |
 |---|---|---|---|---|---|---|
 | Manage users / roles / deactivate | ✔ | — | — | — | — | — |
+| Manage student registry (add/edit/deactivate) | ✔ | — | — | — | — | — |
+| View/update own profile, change own password | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Manage departments, courses, faculty-course assignment | ✔ | — | — | — | — | — |
 | View audit log | ✔ | — | — | — | — | — |
 | Create/edit examinations, deadlines | — | ✔ | — | — | — | — |
@@ -23,4 +25,4 @@ Legend: ✔ allowed, own = only own records / assigned courses, — denied.
 | Finalize marks, reopen with reason | — | ✔ | — | — | — | ✔ (verify step) |
 | Reports / mark sheets / CSV | — | ✔ | own evaluations | — | — | ✔ |
 
-Open item to confirm before the marks module: whether **finalize** is Controller-only or Verifier-only (currently: Verifier verifies, Controller finalizes).
+Resolved: **finalize is Controller-only**; the Verifier verifies a submitted evaluation or sends it back with a reason, and the Controller finalizes verified marks or reopens finalized ones with a reason. Student registry records are managed by Admin and are never sign-in accounts (no student portal).

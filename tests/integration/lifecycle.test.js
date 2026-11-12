@@ -218,6 +218,13 @@ describe('full examination lifecycle through the UI routes', () => {
       .send({ _csrf: controller.csrf })).status).toBe(302);
     await expectStatus('evaluations', evaluationId, 'FINALIZED');
 
+    // Filtering by status must not collapse the summary cards: the exam filter
+    // is visible and the cards still count every status for that exam.
+    const filteredMarks = await controller.agent.get(`/controller/marks?examId=${examId}&status=VERIFIED`);
+    expect(filteredMarks.status).toBe(200);
+    expect(filteredMarks.text).toContain('All examinations');
+    expect(filteredMarks.text).toContain('Finalized</div><div class="display-6">1</div>');
+
     // --- Results page and CSV contain the finalized script -------------
     const results = await controller.agent.get(`/controller/results?examId=${examId}`);
     expect(results.status).toBe(200);

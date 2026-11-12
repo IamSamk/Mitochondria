@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1">Students</h1>
+    <p class="text-muted mb-0">Registry used when the controller uploads answer scripts. Students do not sign in.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/students/new">Add student</a>
+</div>
+
+<form class="row g-2 mb-3" method="get" action="/admin/students">
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search code or name"></div>
+  <div class="col-md-3">
+    <select class="form-select" name="departmentId">
+      <option value="">All departments</option>
+      <% departments.forEach(function (d) { %>
+        <option value="<%= d.id %>" <%= String(filters.departmentId) === String(d.id) ? 'selected' : '' %>><%= d.code %><%= d.is_active ? '' : ' (inactive)' %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" name="active">
+      <option value="">All statuses</option>
+      <option value="true" <%= filters.active === 'true' ? 'selected' : '' %>>Active</option>
+      <option value="false" <%= filters.active === 'false' ? 'selected' : '' %>>Inactive</option>
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Scripts</th><th>Status</th><th>Updated</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      <% students.forEach(function (s) { %>
+        <tr>
+          <td class="fw-semibold"><%= s.student_code %></td>
+          <td><%= s.full_name %></td>
+          <td><%= s.department_code ? s.department_code + ' — ' + s.department_name : '—' %></td>
+          <td><%= s.script_count %></td>
+          <td><span class="badge <%= s.is_active ? 'text-bg-success' : 'text-bg-danger' %>"><%= s.is_active ? 'Active' : 'Inactive' %></span></td>
+          <td class="text-muted small"><%= new Date(s.updated_at).toISOString().slice(0, 16).replace('T', ' ') %></td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="/admin/students/<%= s.id %>/edit">Edit</a>
+            <form class="d-inline" method="post" action="/admin/students/<%= s.id %>/toggle">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-sm <%= s.is_active ? 'btn-outline-danger' : 'btn-outline-success' %>" type="submit"><%= s.is_active ? 'Deactivate' : 'Activate' %></button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!students.length) { %><tr><td colspan="7" class="text-center text-muted py-4">No students match these filters.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('../partials/footer') %>

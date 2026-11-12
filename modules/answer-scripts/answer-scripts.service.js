@@ -78,7 +78,7 @@ async function listOpenExams() {
 
 async function listStudents() {
   const { rows } = await query(
-    'SELECT id, student_code, full_name FROM students ORDER BY student_code');
+    'SELECT id, student_code, full_name FROM students WHERE is_active ORDER BY student_code');
   return rows;
 }
 
@@ -123,8 +123,9 @@ async function uploadScript({ examId, studentId, paperId, expectedPages }, file,
     if (!exam) throw new ValidationError('Select a valid examination');
     if (exam.status === 'CLOSED') throw new ValidationError('Closed examinations cannot receive scripts');
 
-    const student = (await query('SELECT id FROM students WHERE id = $1', [studentId])).rows[0];
-    if (!student) throw new ValidationError('Select a valid student');
+    const student = (await query(
+      'SELECT id FROM students WHERE id = $1 AND is_active', [studentId])).rows[0];
+    if (!student) throw new ValidationError('Select a valid active student');
 
     if (paperId) {
       const paper = (await query(

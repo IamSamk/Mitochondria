@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/admin/students">Students</a></li><li class="breadcrumb-item active"><%= mode === 'create' ? 'Add student' : 'Edit student' %></li></ol></nav>
+<h1 class="h3 mb-3"><%= mode === 'create' ? 'Add student' : 'Edit student' %></h1>
+<div class="card" style="max-width: 720px">
+  <div class="card-body">
+    <form method="post" action="<%= mode === 'create' ? '/admin/students' : '/admin/students/' + student.id %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label" for="studentCode">Student code</label>
+          <input class="form-control" id="studentCode" name="studentCode" value="<%= form.studentCode || '' %>" minlength="2" maxlength="20" required>
+          <div class="form-text">Unique, letters/numbers/hyphens only.</div>
+        </div>
+        <div class="col-md-7">
+          <label class="form-label" for="fullName">Full name</label>
+          <input class="form-control" id="fullName" name="fullName" value="<%= form.fullName || '' %>" minlength="2" maxlength="120" required>
+        </div>
+        <div class="col-md-7">
+          <label class="form-label" for="departmentId">Department</label>
+          <select class="form-select" id="departmentId" name="departmentId">
+            <option value="">None</option>
+            <% departments.forEach(function (d) { %>
+              <option value="<%= d.id %>" <%= String(form.departmentId || '') === String(d.id) ? 'selected' : '' %>><%= d.code %> — <%= d.name %><%= d.is_active ? '' : ' (inactive)' %></option>
+            <% }); %>
+          </select>
+        </div>
+        <% if (mode === 'edit') { %>
+        <div class="col-md-5 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="isActive" name="isActive" value="true" <%= form.isActive ? 'checked' : '' %>>
+            <label class="form-check-label" for="isActive">Record active</label>
+          </div>
+        </div>
+        <% } %>
+      </div>
+      <div class="alert alert-info mt-4 mb-0 small">
+        Deactivating a student hides them from the script-upload picker but keeps their historical scripts and results.
+      </div>
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary" type="submit"><%= mode === 'create' ? 'Add student' : 'Save changes' %></button>
+        <a class="btn btn-outline-secondary" href="/admin/students">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

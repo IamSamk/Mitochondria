@@ -114,4 +114,43 @@ async function selfProfile(userId) {
   return rows[0];
 }
 
-module.exports = { listRoles, listUsers, getUser, createUser, updateUser, resetPassword, selfProfile };
+async function updateOwnProfile(userId, { fullName }, actorId, ip) {
+  return withTransaction(async (db) => {
+    const { rows } = await db.query(
+      `UPDATE users SET full_name=$1, updated_at=now() WHERE id=$2
+       RETURNING id, email, full_name`,
+      [fullName.trim(), userId]);
+    if (!rows[0]) throw new NotFoundError('User not found');
+    await logAudit({
+      actorId: actorId || userId, action: 'PROFILE_UPDATED', entityType: 'user',
+      entityId: userId, metadata: { fullName: rows[0].full_name }, ip
+    }, db);
+    return rows[0];
+  });
+}
+
+async function changePassword(userId, { currentPassword, newPassword }, currentSid, actorId, ip) {
+  const { rows } = await query('SELECT password_hash FROM users WHERE id=$1', [userId]);
+  if (!rows[0]) throw new NotFoundError('User not found');
+  const matches = await bcrypt.compare(currentPassword, rows[0].password_hash);
+  if (!matches) throw new ValidationError('Current password is incorrect');
+  if (currentPassword === newPassword) {
+    throw new ValidationError('Choose a password different from your current one');
+  }
+  const hash = await bcrypt.hash(newPassword, 10);
+  await withTransaction(async (db) => {
+    await db.query('UPDATE users SET password_hash=$1, updated_at=now() WHERE id=$2', [hash, userId]);
+    // Keep the session that performed the change; sign out every other device.
+    await db.query(
+      `DELETE FROM user_sessions WHERE sess->'user'->>'id' = $1 AND sid <> $2`,
+      [String(userId), currentSid]);
+    await logAudit({
+      actorId: actorId || userId, action: 'PASSWORD_CHANGED', entityType: 'user', entityId: userId, ip
+    }, db);
+  });
+}
+
+module.exports = {
+  listRoles, listUsers, getUser, createUser, updateUser, resetPassword, selfProfile,
+  updateOwnProfile, changePassword
+};

@@ -58,6 +58,39 @@ async function listEvaluations({ status = '', examId = '', q = '', evaluatorId =
   return rows;
 }
 
+/** Summary-card counts ignore the status filter but respect exam/search filters. */
+async function countEvaluationsByStatus({ examId = '', q = '' } = {}) {
+  const params = [];
+  const where = [];
+  if (examId) { params.push(examId); where.push(`s.exam_id = $${params.length}`); }
+  if (q) {
+    params.push(`%${q}%`);
+    where.push(`(st.student_code ILIKE $${params.length} OR st.full_name ILIKE $${params.length}
+      OR e.name ILIKE $${params.length})`);
+  }
+  const { rows } = await query(
+    `SELECT ev.status, count(*)::int AS n
+       FROM evaluations ev
+       JOIN answer_scripts s ON s.id = ev.script_id
+       JOIN students st ON st.id = s.student_id
+       JOIN examinations e ON e.id = s.exam_id
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      GROUP BY ev.status`, params);
+  return rows.reduce((acc, row) => { acc[row.status] = row.n; return acc; }, {});
+}
+
+async function examOptions() {
+  const { rows } = await query(
+    `SELECT e.id, e.name, e.exam_date
+       FROM examinations e
+      WHERE EXISTS (
+        SELECT 1 FROM answer_scripts s
+          JOIN evaluations ev ON ev.script_id = s.id
+         WHERE s.exam_id = e.id)
+      ORDER BY e.exam_date DESC, e.id DESC`);
+  return rows;
+}
+
 async function getEvaluationById(id) {
   const { rows } = await query(`${EVALUATION_SELECT} WHERE ev.id = $1`, [id]);
   if (!rows[0]) throw new NotFoundError('Evaluation not found');
@@ -331,6 +364,8 @@ async function reopenEvaluation(evaluationId, controllerId, reason, ip) {
 module.exports = {
   listFacultyQueue,
   listEvaluations,
+  countEvaluationsByStatus,
+  examOptions,
   getEvaluationDetail,
   getFacultyEvaluation,
   startEvaluation,

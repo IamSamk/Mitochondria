@@ -24,8 +24,9 @@ function when(value) {
 }
 
 async function adminView() {
-  const [users, departments, courses, auditToday, recent] = await Promise.all([
+  const [users, students, departments, courses, auditToday, recent] = await Promise.all([
     count('SELECT count(*)::int AS n FROM users WHERE is_active'),
+    count('SELECT count(*)::int AS n FROM students WHERE is_active'),
     count('SELECT count(*)::int AS n FROM departments WHERE is_active'),
     count('SELECT count(*)::int AS n FROM courses WHERE is_active'),
     count(`SELECT count(*)::int AS n FROM audit_logs WHERE created_at >= now() - interval '24 hours'`),
@@ -36,6 +37,7 @@ async function adminView() {
   return {
     cards: [
       { label: 'Active users', value: users, href: '/admin/users' },
+      { label: 'Active students', value: students, href: '/admin/students' },
       { label: 'Departments', value: departments, href: '/admin/academics' },
       { label: 'Courses', value: courses, href: '/admin/academics' },
       { label: 'Audit events (24h)', value: auditToday, href: '/admin/audit' }
