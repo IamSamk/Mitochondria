@@ -47,7 +47,9 @@ staffRouter.get('/', asyncHandler(async (req, res) => {
   const requests = await revaluation.listRequestsForReview({
     examId: req.query.examId || '', status: req.query.status || ''
   });
-  res.render('revaluation/staff', { requests, filters: req.query, title: 'Revaluation Requests' });
+  const { query } = require('../../config/database');
+  const exams = (await query('SELECT id, name FROM examinations ORDER BY exam_date DESC, id DESC LIMIT 200')).rows;
+  res.render('revaluation/staff', { requests, exams, filters: req.query, title: 'Revaluation Requests' });
 }));
 staffRouter.post('/:id/review', [
   body('status').isIn(['UNDER_REVIEW','APPROVED','REJECTED','CLOSED']),

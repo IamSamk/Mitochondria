@@ -11,8 +11,8 @@
   <div class="card-body">
     <form class="row g-2 mb-3" method="post" action="/admin/academics/departments">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required></div>
-      <div class="col-md-8"><input class="form-control" name="name" placeholder="Department name" maxlength="120" required></div>
+      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required aria-label="Department code"></div>
+      <div class="col-md-8"><input class="form-control" name="name" placeholder="Department name" maxlength="120" required aria-label="Department name"></div>
       <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div>
     </form>
     <% departments.forEach(function (d) { %><form id="dept-<%= d.id %>" method="post" action="/admin/academics/departments/<%= d.id %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form><% }); %>
@@ -22,10 +22,10 @@
         <tbody>
         <% departments.forEach(function (d) { %>
           <tr>
-            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="code" value="<%= d.code %>" required></td>
-            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="name" value="<%= d.name %>" required></td>
+            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="code" value="<%= d.code %>" required aria-label="Department code for <%= d.code %>"></td>
+            <td><input class="form-control form-control-sm" form="dept-<%= d.id %>" name="name" value="<%= d.name %>" required aria-label="Department name for <%= d.code %>"></td>
             <td><%= d.course_count %></td>
-            <td><input class="form-check-input" type="checkbox" form="dept-<%= d.id %>" name="isActive" value="true" <%= d.is_active ? 'checked' : '' %>></td>
+            <td><input class="form-check-input" type="checkbox" form="dept-<%= d.id %>" name="isActive" value="true" <%= d.is_active ? 'checked' : '' %> aria-label="Department active for <%= d.code %>"></td>
             <td><button class="btn btn-sm btn-outline-secondary" form="dept-<%= d.id %>" type="submit">Save</button></td>
           </tr>
         <% }); %>
@@ -42,14 +42,14 @@
     <form class="row g-2 mb-3" method="post" action="/admin/academics/courses">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="col-md-3">
-        <select class="form-select" name="departmentId" required>
+        <select class="form-select" name="departmentId" required aria-label="Course department">
           <option value="">Department</option>
           <% departments.filter(function (d) { return d.is_active; }).forEach(function (d) { %><option value="<%= d.id %>"><%= d.code %></option><% }); %>
         </select>
       </div>
-      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required></div>
-      <div class="col-md-4"><input class="form-control" name="title" placeholder="Course title" maxlength="160" required></div>
-      <div class="col-md-1"><input class="form-control" name="credits" type="number" min="1" max="12" placeholder="Cr"></div>
+      <div class="col-md-2"><input class="form-control" name="code" placeholder="Code" maxlength="16" required aria-label="Course code"></div>
+      <div class="col-md-4"><input class="form-control" name="title" placeholder="Course title" maxlength="160" required aria-label="Course title"></div>
+      <div class="col-md-1"><input class="form-control" name="credits" type="number" min="1" max="12" placeholder="Cr" aria-label="Course credits"></div>
       <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add</button></div>
     </form>
     <% courses.forEach(function (c) { %><form id="course-<%= c.id %>" method="post" action="/admin/academics/courses/<%= c.id %>"><input type="hidden" name="_csrf" value="<%= csrfToken %>"></form><% }); %>
@@ -60,15 +60,15 @@
         <% courses.forEach(function (c) { %>
           <tr>
             <td>
-              <select class="form-select form-select-sm" form="course-<%= c.id %>" name="departmentId" required>
+              <select class="form-select form-select-sm" form="course-<%= c.id %>" name="departmentId" required aria-label="Department for course <%= c.code %>">
                 <% departments.forEach(function (d) { %><option value="<%= d.id %>" <%= d.id === c.department_id ? 'selected' : '' %>><%= d.code %></option><% }); %>
               </select>
             </td>
-            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="code" value="<%= c.code %>" required></td>
-            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="title" value="<%= c.title %>" required></td>
-            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="credits" type="number" min="1" max="12" value="<%= c.credits || '' %>"></td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="code" value="<%= c.code %>" required aria-label="Course code for <%= c.code %>"></td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="title" value="<%= c.title %>" required aria-label="Course title for <%= c.code %>"></td>
+            <td><input class="form-control form-control-sm" form="course-<%= c.id %>" name="credits" type="number" min="1" max="12" value="<%= c.credits || '' %>" aria-label="Credits for course <%= c.code %>"></td>
             <td><%= c.faculty_count %></td>
-            <td><input class="form-check-input" type="checkbox" form="course-<%= c.id %>" name="isActive" value="true" <%= c.is_active ? 'checked' : '' %>></td>
+            <td><input class="form-check-input" type="checkbox" form="course-<%= c.id %>" name="isActive" value="true" <%= c.is_active ? 'checked' : '' %> aria-label="Course active for <%= c.code %>"></td>
             <td><button class="btn btn-sm btn-outline-secondary" form="course-<%= c.id %>" type="submit">Save</button></td>
           </tr>
         <% }); %>
@@ -85,13 +85,13 @@
     <form class="row g-2 mb-3" method="post" action="/admin/academics/assignments">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="col-md-5">
-        <select class="form-select" name="facultyId" required>
+        <select class="form-select" name="facultyId" required aria-label="Faculty member">
           <option value="">Faculty member</option>
           <% faculty.forEach(function (f) { %><option value="<%= f.id %>"><%= f.full_name %> (<%= f.email %>)</option><% }); %>
         </select>
       </div>
       <div class="col-md-5">
-        <select class="form-select" name="courseId" required>
+        <select class="form-select" name="courseId" required aria-label="Course">
           <option value="">Course</option>
           <% courses.filter(function (c) { return c.is_active; }).forEach(function (c) { %><option value="<%= c.id %>"><%= c.code %> — <%= c.title %></option><% }); %>
         </select>

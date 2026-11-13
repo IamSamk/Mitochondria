@@ -49,7 +49,7 @@
             <% optionRows.forEach(function (o) { %>
               <div class="input-group input-group-sm mb-2">
                 <span class="input-group-text" style="width: 44px"><%= o.label %></span>
-                <input class="form-control" name="optionBody" value="<%= o.body %>" maxlength="500" placeholder="Option text">
+                <input class="form-control" name="optionBody" value="<%= o.body %>" maxlength="500" placeholder="Option text" aria-label="Option <%= o.label %> text">
                 <span class="input-group-text">
                   <input class="form-check-input mt-0" type="radio" name="correctOption" value="<%= o.index %>" <%= o.isCorrect ? 'checked' : '' %> aria-label="Correct option <%= o.label %>">
                 </span>

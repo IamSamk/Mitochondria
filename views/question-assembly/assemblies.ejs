@@ -8,7 +8,13 @@
   <div class="card-body">
     <form method="post" action="/faculty/assembly/assemblies" class="row g-3">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-      <div class="col-md-4"><label class="form-label" for="examId">Exam ID</label><input class="form-control" id="examId" name="examId" type="number" required></div>
+      <div class="col-md-4">
+        <label class="form-label" for="examId">Exam</label>
+        <select class="form-select" id="examId" name="examId" required>
+          <option value="">Select exam</option>
+          <% exams.forEach(function(e){ %><option value="<%= e.id %>"><%= e.name %> (#<%= e.id %>)</option><% }); %>
+        </select>
+      </div>
       <div class="col-md-2"><label class="form-label" for="setCode">Set code</label><input class="form-control" id="setCode" name="setCode" maxlength="1" required></div>
       <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Create</button></div>
     </form>

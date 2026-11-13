@@ -1,7 +1,59 @@
+:root { --sidebar-bg: #1f2a44; --sidebar-hover: #2f3d63; --sidebar-text: #c9d1e6; }
 body { background: #f5f6fa; }
-.sidebar { width: 240px; min-height: 100vh; background: #1f2a44; color: #fff; }
+
+/* Skip link: hidden until focused, then visible above all content. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 2000;
+  padding: .5rem 1rem;
+  background: #fff;
+  color: #0d6efd;
+  border-radius: .375rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.skip-link:focus { top: 1rem; }
+
+.sidebar { width: 240px; min-height: 100vh; background: var(--sidebar-bg); color: #fff; flex-shrink: 0; }
 .sidebar .brand { font-weight: 600; font-size: 1.1rem; }
-.sidebar .nav-link { color: #c9d1e6; border-radius: .375rem; }
-.sidebar .nav-link:hover, .sidebar .nav-link.active { background: #2f3d63; color: #fff; }
+.sidebar .nav-link { color: var(--sidebar-text); border-radius: .375rem; }
+.sidebar .nav-link:hover,
+.sidebar .nav-link:focus-visible { background: var(--sidebar-hover); color: #fff; }
+.sidebar .nav-link.active { background: var(--sidebar-hover); color: #fff; }
 .topbar { background: #fff; border-bottom: 1px solid #e3e6ee; }
-@media (max-width: 768px) { .sidebar { width: 180px; } }
+main:focus { outline: none; }
+
+/* Visible keyboard focus on every interactive control. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid #ffc107;
+  outline-offset: 2px;
+}
+
+/* Numbers align in tables and marks columns. */
+.table td, .table th { vertical-align: middle; }
+.table .text-end, .table .text-nowrap { font-variant-numeric: tabular-nums; }
+
+/* Keep long content from breaking the layout. */
+.min-w-0 { min-width: 0; }
+.text-break-anywhere { overflow-wrap: anywhere; }
+
+/* Touch devices: remove the 300ms double-tap delay. */
+button, .btn, .nav-link { touch-action: manipulation; }
+
+@media (max-width: 768px) {
+  .app-shell { flex-direction: column; }
+  .sidebar { width: 100%; min-height: auto; }
+  .sidebar .nav { flex-direction: row; flex-wrap: wrap; gap: .25rem; }
+  .sidebar .brand { margin-bottom: .5rem !important; }
+  main.p-4 { padding: 1rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

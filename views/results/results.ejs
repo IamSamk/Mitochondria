@@ -16,15 +16,15 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/controller/results">
-  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam"></div>
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search student or exam" aria-label="Search results by student or exam"></div>
   <div class="col-md-3">
-    <select class="form-select" name="examId">
+    <select class="form-select" name="examId" aria-label="Filter by exam">
       <option value="">All examinations</option>
       <% options.exams.forEach(function (e) { %><option value="<%= e.id %>" <%= String(filters.examId) === String(e.id) ? 'selected' : '' %>><%= e.name %> (<%= String(e.exam_date).slice(0, 10) %>)</option><% }); %>
     </select>
   </div>
   <div class="col-md-3">
-    <select class="form-select" name="courseId">
+    <select class="form-select" name="courseId" aria-label="Filter by course">
       <option value="">All courses</option>
       <% options.courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
     </select>

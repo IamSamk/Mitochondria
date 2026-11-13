@@ -33,7 +33,7 @@
               <% if (p.is_finalized) { %>
                 <form class="d-flex gap-1" method="post" action="/controller/papers/<%= p.version_id %>/release">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                  <input class="form-control form-control-sm" name="note" placeholder="Optional note" maxlength="500">
+                  <input class="form-control form-control-sm" name="note" placeholder="Optional note" maxlength="500" aria-label="Release note">
                   <button class="btn btn-sm btn-primary text-nowrap" type="submit">Release</button>
                 </form>
               <% } else { %>

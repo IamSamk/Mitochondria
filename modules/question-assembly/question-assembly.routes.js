@@ -66,7 +66,9 @@ router.post('/contributions/:id/status', requireRole('SUBJECT_HEAD','CONTROLLER'
 // Assembly
 router.get('/assemblies', requireRole('CONTROLLER','SUBJECT_HEAD','ADMIN'),
   asyncHandler(async (req, res) => {
-    res.render('question-assembly/assemblies', { title: 'Question Assemblies' });
+    const { query } = require('../../config/database');
+    const exams = (await query('SELECT id, name FROM examinations ORDER BY exam_date DESC, id DESC LIMIT 200')).rows;
+    res.render('question-assembly/assemblies', { exams, title: 'Question Assemblies' });
   }));
 
 router.post('/assemblies', requireRole('CONTROLLER','SUBJECT_HEAD','ADMIN'),

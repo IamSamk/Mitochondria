@@ -126,7 +126,7 @@ async function autoAssemble(assemblyId, { topics = [], difficultyMix = {}, total
   const target = Number(totalMarks || exam.max_marks);
   const selected = [];
   let total = 0;
-  const remaining = [...candidates];
+  let remaining = [...candidates];
   // Prefer difficulty mix if provided.
   const mix = difficultyMix || {};
   const difficulties = ['EASY','MEDIUM','HARD'].filter((d) => mix[d]);

@@ -49,15 +49,15 @@
           <td>
             <form method="post" action="/faculty/assembly/contributions/<%= c.id %>/review" class="d-flex gap-1">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <input class="form-control form-control-sm" name="clarity" placeholder="clar" style="width:50px" required>
-              <input class="form-control form-control-sm" name="difficultyAccuracy" placeholder="diff" style="width:50px" required>
-              <input class="form-control form-control-sm" name="correctness" placeholder="corr" style="width:50px" required>
+              <input class="form-control form-control-sm" name="clarity" placeholder="Clarity" style="width:70px" required aria-label="Clarity score 1-5">
+              <input class="form-control form-control-sm" name="difficultyAccuracy" placeholder="Difficulty" style="width:80px" required aria-label="Difficulty accuracy score 1-5">
+              <input class="form-control form-control-sm" name="correctness" placeholder="Correct" style="width:75px" required aria-label="Correctness score 1-5">
               <button class="btn btn-sm btn-outline-primary" type="submit">Score</button>
             </form>
             <% if (['SUBJECT_HEAD','CONTROLLER','ADMIN'].includes(currentUser.role)) { %>
             <form method="post" action="/faculty/assembly/contributions/<%= c.id %>/status" class="d-flex gap-1 mt-1">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <select class="form-select form-select-sm" name="status"><option>APPROVED</option><option>REJECTED</option><option>PENDING</option></select>
+              <select class="form-select form-select-sm" name="status" aria-label="Set review status"><option>APPROVED</option><option>REJECTED</option><option>PENDING</option></select>
               <button class="btn btn-sm btn-outline-secondary" type="submit">Set</button>
             </form>
             <% } %>

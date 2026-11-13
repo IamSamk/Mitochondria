@@ -8,21 +8,21 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/faculty/questions">
-  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search question or topic"></div>
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search question or topic" aria-label="Search questions by text or topic"></div>
   <div class="col-md-3">
-    <select class="form-select" name="courseId">
+    <select class="form-select" name="courseId" aria-label="Filter by course">
       <option value="">All my courses</option>
       <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
     </select>
   </div>
   <div class="col-md-2">
-    <select class="form-select" name="type">
+    <select class="form-select" name="type" aria-label="Filter by question type">
       <option value="">All types</option>
       <% types.forEach(function (t) { %><option value="<%= t %>" <%= filters.type === t ? 'selected' : '' %>><%= t %></option><% }); %>
     </select>
   </div>
   <div class="col-md-2">
-    <select class="form-select" name="archived">
+    <select class="form-select" name="archived" aria-label="Filter by archived status">
       <option value="">Active</option>
       <option value="1" <%= filters.archived === '1' ? 'selected' : '' %>>Archived</option>
     </select>

@@ -8,15 +8,15 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/controller/exams">
-  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search exam or course"></div>
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search exam or course" aria-label="Search exams or courses"></div>
   <div class="col-md-3">
-    <select class="form-select" name="courseId">
+    <select class="form-select" name="courseId" aria-label="Filter by course">
       <option value="">All courses</option>
       <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= String(filters.courseId) === String(c.id) ? 'selected' : '' %>><%= c.code %> — <%= c.title %></option><% }); %>
     </select>
   </div>
   <div class="col-md-3">
-    <select class="form-select" name="status">
+    <select class="form-select" name="status" aria-label="Filter by status">
       <option value="">All statuses</option>
       <% statuses.forEach(function (s) { %><option value="<%= s %>" <%= filters.status === s ? 'selected' : '' %>><%= s.replaceAll('_', ' ') %></option><% }); %>
     </select>

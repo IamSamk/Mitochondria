@@ -8,15 +8,15 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/admin/users">
-  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search name or email"></div>
+  <div class="col-md-4"><input class="form-control" name="q" value="<%= filters.q || '' %>" placeholder="Search name or email" aria-label="Search users by name or email"></div>
   <div class="col-md-3">
-    <select class="form-select" name="role">
+    <select class="form-select" name="role" aria-label="Filter by role">
       <option value="">All roles</option>
       <% roles.forEach(function (r) { %><option value="<%= r.code %>" <%= filters.role === r.code ? 'selected' : '' %>><%= r.name %></option><% }); %>
     </select>
   </div>
   <div class="col-md-3">
-    <select class="form-select" name="active">
+    <select class="form-select" name="active" aria-label="Filter by active status">
       <option value="">All statuses</option>
       <option value="true" <%= filters.active === 'true' ? 'selected' : '' %>>Active</option>
       <option value="false" <%= filters.active === 'false' ? 'selected' : '' %>>Inactive</option>
@@ -48,7 +48,7 @@
               <summary class="btn btn-sm btn-outline-secondary">Reset password</summary>
               <form class="mt-2 d-flex gap-1" method="post" action="/admin/users/<%= u.id %>/reset-password">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <input class="form-control form-control-sm" type="password" name="password" minlength="8" placeholder="New password" required>
+                <input class="form-control form-control-sm" type="password" name="password" minlength="8" placeholder="New password" required aria-label="New password for user" autocomplete="new-password">
                 <button class="btn btn-sm btn-warning" type="submit">Set</button>
               </form>
             </details>

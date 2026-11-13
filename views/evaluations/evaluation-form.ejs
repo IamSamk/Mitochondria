@@ -48,11 +48,11 @@
             <td><%= Number(q.marks) %></td>
             <td>
               <input class="form-control form-control-sm" type="number" step="0.01" min="0" max="<%= Number(q.marks) %>"
-                name="mark_<%= q.id %>" value="<%= m && m.marks_awarded !== null ? Number(m.marks_awarded) : '' %>" <%= readOnly ? 'disabled' : '' %>>
+                name="mark_<%= q.id %>" value="<%= m && m.marks_awarded !== null ? Number(m.marks_awarded) : '' %>" <%= readOnly ? 'disabled' : '' %> aria-label="Marks awarded for question <%= q.display_no %>">
             </td>
             <td>
               <input class="form-control form-control-sm" name="comment_<%= q.id %>" maxlength="500"
-                value="<%= m && m.comment ? m.comment : '' %>" <%= readOnly ? 'disabled' : '' %>>
+                value="<%= m && m.comment ? m.comment : '' %>" <%= readOnly ? 'disabled' : '' %> aria-label="Comment for question <%= q.display_no %>">
             </td>
           </tr>
         <% }); %>

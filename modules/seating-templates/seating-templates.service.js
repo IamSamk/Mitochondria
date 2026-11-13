@@ -2,6 +2,7 @@ const { query, withTransaction } = require('../../config/database');
 const { ValidationError, NotFoundError, ForbiddenError } = require('../../config/errors');
 const { logAudit } = require('../audit/audit.service');
 const academics = require('../academics/academics.service');
+const logistics = require('../logistics/logistics.service');
 
 const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
 
@@ -118,7 +119,7 @@ async function deleteTemplate(id, userId, ip) {
 }
 
 async function addRoomInstance(examId, templateId, roomNumber, userId, ip) {
-  const exam = await (require('../logistics/logistics.service').examContext)(examId);
+  const exam = await logistics.examContext(examId);
   await academics.assertFacultyAssigned(userId, exam.course_id);
   const tmpl = (await query('SELECT * FROM room_templates WHERE id=$1', [templateId])).rows[0];
   if (!tmpl) throw new NotFoundError('Template not found');
@@ -143,7 +144,7 @@ async function listRoomInstances(examId) {
 }
 
 async function generateFromTemplates(examId, userId, ip) {
-  const exam = await (require('../logistics/logistics.service').examContext)(examId);
+  const exam = await logistics.examContext(examId);
   await academics.assertFacultyAssigned(userId, exam.course_id);
   const instances = await listRoomInstances(examId);
   if (!instances.length) throw new ValidationError('Add at least one room instance first');

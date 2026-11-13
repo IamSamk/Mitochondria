@@ -7,18 +7,18 @@
 </div>
 
 <form class="row g-2 mb-3" method="get" action="/admin/audit">
-  <div class="col-md-2"><input class="form-control" name="action" value="<%= filters.action %>" placeholder="Action"></div>
+  <div class="col-md-2"><input class="form-control" name="action" value="<%= filters.action %>" placeholder="Action" aria-label="Filter by action"></div>
   <div class="col-md-2">
-    <select class="form-select" name="entityType">
+    <select class="form-select" name="entityType" aria-label="Filter by entity type">
       <option value="">All entities</option>
       <% ['user','department','course','examination','question','question_paper','paper_version','answer_script','evaluation','marks'].forEach(function (t) { %>
         <option value="<%= t %>" <%= filters.entityType === t ? 'selected' : '' %>><%= t %></option>
       <% }); %>
     </select>
   </div>
-  <div class="col-md-2"><input class="form-control" name="actor" value="<%= filters.actor %>" placeholder="Actor email"></div>
-  <div class="col-md-2"><input class="form-control" name="from" type="date" value="<%= filters.from %>"></div>
-  <div class="col-md-2"><input class="form-control" name="to" type="date" value="<%= filters.to %>"></div>
+  <div class="col-md-2"><input class="form-control" name="actor" value="<%= filters.actor %>" placeholder="Actor email" aria-label="Filter by actor email"></div>
+  <div class="col-md-2"><input class="form-control" name="from" type="date" value="<%= filters.from %>" aria-label="Filter from date"></div>
+  <div class="col-md-2"><input class="form-control" name="to" type="date" value="<%= filters.to %>" aria-label="Filter to date"></div>
   <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
 </form>
 

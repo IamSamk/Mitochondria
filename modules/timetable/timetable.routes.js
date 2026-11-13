@@ -10,7 +10,9 @@ const router = express.Router();
 router.use(requireAuth, requireRole('CONTROLLER','FACULTY','ADMIN'));
 
 router.get('/', asyncHandler(async (req, res) => {
-  res.render('timetable/index', { title: 'Exam Timetable' });
+  const { query } = require('../../config/database');
+  const exams = (await query('SELECT id, name, exam_date FROM examinations ORDER BY exam_date DESC, id DESC LIMIT 200')).rows;
+  res.render('timetable/index', { exams, title: 'Exam Timetable' });
 }));
 
 router.post('/solve', asyncHandler(async (req, res) => {
