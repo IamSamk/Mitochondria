@@ -159,6 +159,9 @@ async function uploadScript({ examId, studentId, paperId, expectedPages }, file,
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'UPLOADED',$10,$11) RETURNING *`,
         [examId, paperId, studentId, relPath, sha256, file.originalname || null, pages,
           expected, complete, complete ? null : `Uploaded ${pages} page(s); expected ${expected}`, actorId]);
+      // Durable copy: the on-disk file is temporary on serverless hosts.
+      await db.query('INSERT INTO answer_script_files(script_id, content) VALUES ($1, $2)',
+        [rows[0].id, await fs.promises.readFile(file.path)]);
       await logAudit({
         actorId, action: 'SCRIPT_UPLOADED', entityType: 'answer_script', entityId: rows[0].id,
         metadata: { examId, studentId, paperId, pages, complete }, ip

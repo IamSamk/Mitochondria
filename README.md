@@ -52,7 +52,7 @@ Locally we use a Docker Postgres container (`emp-postgres`) on port 5432 with tw
 - `emp` — development database (DATABASE_URL)
 - `emp_test` — test database, rebuilt from migrations + seed on every `pnpm test` (TEST_DATABASE_URL)
 
-Credentials: user `emp`, password `emp_dev_password`. Demo data comes from `scripts/seed.js` (roles + synthetic accounts, courses, students). The `scripts/seed-demo.js` script injects a richer, realistic demo dataset (exam, questions, notification, announcement) for showcasing.
+Credentials: user `emp`, password `emp_dev_password`. Demo data comes from `scripts/seed.js` (roles + synthetic accounts, courses, students). `pnpm db:seed:demo` (`scripts/seed-demo.js`) adds full workflow scenarios on top: see "Demo scenarios" below.
 
 ## Deploying to Vercel / Supabase
 
@@ -79,13 +79,38 @@ If a variable is missing, the site shows a "Server is not configured yet" page i
 | Controller | controller@college.test |
 | Faculty (CS101) | faculty1@college.test |
 | Faculty (CS102) | faculty2@college.test |
+| Faculty (CS201, CS202) | faculty3@college.test |
+| Faculty (CS101, second teacher) | faculty4@college.test |
+| Faculty (ECE: EC101, EC102) | faculty5@college.test |
+| Faculty (MECH: ME101) | faculty6@college.test |
 | Reviewer | reviewer@college.test |
 | Printing Coordinator | printing@college.test |
 | Marks Verifier | verifier@college.test |
-| Subject Head (CSE) | subjecthead@college.test |
-| Department Head (CSE) | depthead@college.test |
-| Student (CS101) | student1@college.test |
-| Student (CS101) | student1@college.test |
+| Subject Head (CSE / ECE) | subjecthead@college.test / subjecthead.ece@college.test |
+| Department Head (CSE / ECE) | depthead@college.test / depthead.ece@college.test |
+| Students (CSE) | student1@college.test ... student5@college.test |
+| Student (ECE) | student.ece@college.test |
+| Deactivated faculty (login refused) | former.faculty@college.test |
+
+Base data (`pnpm db:seed`): 3 departments, 7 courses, 65 students (one inactive).
+
+## Demo scenarios (`pnpm db:seed:demo`)
+Walks synthetic exams through every workflow state using the app's own routes, so each role
+has work waiting. Runs once per database (skips if already present). It is not part of the Vercel
+build (it makes thousands of queries, which is slow from Vercel's build region to a distant
+database); run it from your machine instead: `$env:DATABASE_URL="<hosted url>"; pnpm db:seed:demo`.
+The production Supabase database already has this data loaded.
+
+| Exam | State | What to try |
+|---|---|---|
+| CS101 Data Structures - Midterm 2026 | Evaluation | 17 scripts covering every state: finalized, verified (controller to finalize), submitted (verifier queue), sent back (faculty1), draft, allocated, re-allocated, verified-but-unallocated, awaiting verification, on hold (missing page). Results + CSV. Paper download denied to faculty3 is logged. |
+| CS102 Database Systems - Midterm 2026 | Paper preparation | Set A in reviewer queue, Set B in subject-head queue, Set C rejected with comments and a draft revision. |
+| CS201 Operating Systems - End Semester 2026 | Paper preparation | Set A approved (faculty3 to finalize), Set B finalized (controller to release, then printing). |
+| CS202 Computer Networks - Internal Assessment 1 | Marks finalized | Direct marksheet for all CSE students, seating + invigilation, revaluation window open: one approved, one under review, one rejected; student4/5 can still apply. |
+| CS101 Data Structures - End Semester 2026 | Planned | Incomplete draft paper, room templates + seating plan, invigilation, question pool (one contribution pending review) and an auto-assembled Set B to materialize. |
+| CS102 End Semester, ME101 Quiz 1, Midterm Examination - Data Structures (Mar 2027) | Planned | Timetable slots; the March exam has 6 ready 10/5-mark questions in the bank for a 50-mark paper. |
+| EC101 Signals and Systems - Midterm 2026 | Marks finalized | ECE marksheet: visible to ECE heads, not CSE heads. |
+| CS101 Data Structures - Internal Assessment 1 | Closed | Read-only historical exam with marks. |
 
 ## Conventions (shared contracts)
 - **DB**: snake_case plural tables, `bigint` identity PKs, `timestamptz` (UTC), status via `CHECK`. Schema changes only via new numbered files in `database/migrations/` (never edit an applied one).

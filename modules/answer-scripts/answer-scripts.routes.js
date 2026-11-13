@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const { body, validationResult } = require('express-validator');
@@ -7,8 +6,7 @@ const { requireRole } = require('../../middleware/role.middleware');
 const { asyncHandler } = require('../../middleware/async.middleware');
 const { setFlash } = require('../../middleware/flash.middleware');
 const { csrfProtect } = require('../../middleware/csrf.middleware');
-const { uploadAnswerScript, resolveStoragePath, maxUploadMb } = require('../../config/upload');
-const { NotFoundError } = require('../../config/errors');
+const { uploadAnswerScript, ensureScriptFile, maxUploadMb } = require('../../config/upload');
 const scripts = require('./answer-scripts.service');
 
 const router = express.Router();
@@ -91,8 +89,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
 
 router.get('/:id/download', asyncHandler(async (req, res) => {
   const script = await scripts.getScript(req.params.id);
-  const abs = resolveStoragePath(script.file_path);
-  if (!fs.existsSync(abs)) throw new NotFoundError('The stored script file is missing');
+  const abs = await ensureScriptFile(script);
   res.download(abs, path.basename(script.original_name || `script-${script.id}.pdf`));
 }));
 

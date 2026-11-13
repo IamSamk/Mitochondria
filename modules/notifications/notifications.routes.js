@@ -8,6 +8,13 @@ const notifications = require('./notifications.service');
 const router = express.Router();
 router.use(requireAuth);
 
+// The header's Notifications button links here for every role.
+router.get('/', asyncHandler(async (req, res) => {
+  if (req.session.user.role === 'STUDENT') return res.redirect('/student/notifications');
+  const list = await notifications.listForUser(req.session.user.id, { limit: 50 });
+  return res.render('student/notifications', { notifications: list, title: 'Notifications' });
+}));
+
 router.get('/count', asyncHandler(async (req, res) => {
   res.json({ success: true, data: { count: await notifications.unreadCount(req.session.user.id) } });
 }));

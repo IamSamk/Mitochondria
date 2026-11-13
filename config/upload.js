@@ -57,6 +57,24 @@ async function removeFileQuietly(absPath) {
   try { await fs.promises.unlink(absPath); } catch { /* already gone */ }
 }
 
+/**
+ * Absolute path to an answer script's PDF, restoring it from the database copy
+ * (answer_script_files) when the local disk no longer has it, e.g. after a
+ * serverless cold start. `script` needs `id` and `file_path`.
+ */
+async function ensureScriptFile(script) {
+  const abs = resolveStoragePath(script.file_path);
+  if (fs.existsSync(abs)) return abs;
+  // Required lazily: config/database must not load just because upload config does.
+  const { query } = require('./database');
+  const { NotFoundError } = require('./errors');
+  const { rows } = await query('SELECT content FROM answer_script_files WHERE script_id = $1', [script.id]);
+  if (!rows[0]) throw new NotFoundError('The stored script file is missing');
+  await fs.promises.mkdir(path.dirname(abs), { recursive: true });
+  await fs.promises.writeFile(abs, rows[0].content);
+  return abs;
+}
+
 module.exports = {
   storageRoot,
   answerScriptDir,
@@ -65,5 +83,6 @@ module.exports = {
   uploadAnswerScript,
   resolveStoragePath,
   sha256File,
-  removeFileQuietly
+  removeFileQuietly,
+  ensureScriptFile
 };

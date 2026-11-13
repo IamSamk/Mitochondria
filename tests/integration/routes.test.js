@@ -27,6 +27,9 @@ for (const [role, email] of Object.entries(ACCOUNTS)) {
         const page = await agent.get(path);
         expect({ label, path, status: page.status }).toEqual({ label, path, status: 200 });
       }
+      // The header's Notifications button is shown to every role.
+      const notes = await agent.get('/notifications').redirects(1);
+      expect({ path: '/notifications', status: notes.status }).toEqual({ path: '/notifications', status: 200 });
     });
   });
 }

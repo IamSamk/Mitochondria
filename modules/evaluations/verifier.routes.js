@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const { body, validationResult } = require('express-validator');
@@ -6,8 +5,7 @@ const { requireAuth } = require('../../middleware/auth.middleware');
 const { requireRole } = require('../../middleware/role.middleware');
 const { asyncHandler } = require('../../middleware/async.middleware');
 const { setFlash } = require('../../middleware/flash.middleware');
-const { resolveStoragePath } = require('../../config/upload');
-const { NotFoundError } = require('../../config/errors');
+const { ensureScriptFile } = require('../../config/upload');
 const evaluations = require('./evaluations.service');
 
 const router = express.Router();
@@ -69,8 +67,7 @@ router.post('/:id/reopen', [
 
 router.get('/:id/script', asyncHandler(async (req, res) => {
   const detail = await evaluations.getEvaluationDetail(req.params.id);
-  const abs = resolveStoragePath(detail.evaluation.file_path);
-  if (!fs.existsSync(abs)) throw new NotFoundError('The stored script file is missing');
+  const abs = await ensureScriptFile({ id: detail.evaluation.script_id, file_path: detail.evaluation.file_path });
   res.download(abs, path.basename(detail.evaluation.original_name || `script-${detail.evaluation.script_id}.pdf`));
 }));
 
