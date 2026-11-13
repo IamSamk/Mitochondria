@@ -123,9 +123,17 @@ async function assertFacultyVersion(versionId, facultyId) {
 }
 
 /** Only the subject teacher who created the paper may change or finalize it. */
-function assertPaperOwner(version, facultyId) {
+async function assertPaperOwner(version, facultyId) {
   if (Number(version.paper_owner) !== Number(facultyId)) {
-    throw new ForbiddenError('Only the subject teacher who created this paper can modify it');
+    let ownerName = 'the subject teacher who created it';
+    try {
+      const { rows } = await query('SELECT full_name FROM users WHERE id = $1', [version.paper_owner]);
+      if (rows[0] && rows[0].full_name) ownerName = rows[0].full_name;
+    } catch (e) { /* ignore */ }
+    throw new ForbiddenError(
+      `Only ${ownerName} can modify or finalize this paper. ` +
+      `You are assigned to this course but did not create this paper. ` +
+      `Ask ${ownerName} or your administrator if you need access.`);
   }
 }
 
@@ -184,7 +192,7 @@ async function createRevision(paperId, facultyId, ip) {
 async function getBuilder(versionId, facultyId) {
   const version = await assertFacultyVersion(versionId, facultyId);
   if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
-  assertPaperOwner(version, facultyId);
+  await assertPaperOwner(version, facultyId);
   const available = await query(
     `SELECT id, question_type, body, marks, difficulty, unit, topic
        FROM questions WHERE course_id=$1 AND NOT is_archived ORDER BY created_at DESC`, [version.course_id]);
@@ -201,7 +209,7 @@ async function addQuestion(versionId, { questionId, sectionTitle }, facultyId, i
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
     const exam = await db.query('SELECT course_id, max_marks FROM examinations WHERE id=$1', [version.exam_id]);
     await academics.assertFacultyAssigned(facultyId, exam.rows[0].course_id);
-    assertPaperOwner(version, facultyId);
+    await assertPaperOwner(version, facultyId);
 
     const q = await db.query(
       'SELECT * FROM questions WHERE id=$1 AND NOT is_archived', [questionId]);
@@ -240,7 +248,7 @@ async function removeQuestion(versionId, paperQuestionId, facultyId, ip) {
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be edited');
     const exam = await db.query('SELECT course_id FROM examinations WHERE id=$1', [version.exam_id]);
     await academics.assertFacultyAssigned(facultyId, exam.rows[0].course_id);
-    assertPaperOwner(version, facultyId);
+    await assertPaperOwner(version, facultyId);
     const removed = await db.query(
       'DELETE FROM paper_questions WHERE id=$1 AND version_id=$2 RETURNING id', [paperQuestionId, versionId]);
     if (!removed.rows[0]) throw new NotFoundError('Question is not part of this version');
@@ -273,7 +281,7 @@ async function submitVersion(versionId, facultyId, ip) {
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be submitted');
     await academics.assertFacultyAssigned(facultyId, version.course_id);
-    assertPaperOwner(version, facultyId);
+    await assertPaperOwner(version, facultyId);
 
     const questions = (await db.query(
       'SELECT * FROM paper_questions WHERE version_id=$1 ORDER BY position', [versionId])).rows;
@@ -323,7 +331,7 @@ async function saveDraft(versionId, facultyId, ip) {
     if (!version) throw new NotFoundError('Paper version not found');
     if (version.status !== 'DRAFT') throw new ValidationError('Only draft versions can be saved');
     await academics.assertFacultyAssigned(facultyId, version.course_id);
-    assertPaperOwner(version, facultyId);
+    await assertPaperOwner(version, facultyId);
     const { rows } = await db.query(
       `UPDATE paper_versions
           SET draft_saved_at=now(),
@@ -351,7 +359,7 @@ async function finalizeVersion(versionId, facultyId, ip) {
     }
     if (version.is_finalized) throw new ValidationError('This paper is already finalized');
     await academics.assertFacultyAssigned(facultyId, version.course_id);
-    assertPaperOwner(version, facultyId);
+    await assertPaperOwner(version, facultyId);
     const { rows } = await db.query(
       `UPDATE paper_versions SET is_finalized=true WHERE id=$1 RETURNING *`, [versionId]);
     await logAudit({ actorId: facultyId, action: 'PAPER_FINALIZED', entityType: 'paper_version',
@@ -451,12 +459,12 @@ async function headReviewVersion(versionId, headId, decision, comments, ip) {
     const head = await db.query(
       `SELECT u.department_id FROM users u JOIN roles r ON r.id=u.role_id
         WHERE u.id=$1 AND u.is_active AND r.code = 'SUBJECT_HEAD'`, [headId]);
-    if (!head.rows[0]) throw new ForbiddenError('Only the subject head can approve or veto a paper');
+    if (!head.rows[0]) throw new ForbiddenError('Only the subject head can approve or veto a paper.');
     if (Number(head.rows[0].department_id) !== Number(version.department_id)) {
-      throw new ForbiddenError('This paper belongs to another department');
+      throw new ForbiddenError('This paper belongs to another department. You can only review papers in your department.');
     }
     if (Number(version.paper_owner) === Number(headId)) {
-      throw new ForbiddenError('You cannot review your own paper');
+      throw new ForbiddenError('You cannot review your own paper. Ask another head to review it.');
     }
 
     if (decision === 'APPROVED') {

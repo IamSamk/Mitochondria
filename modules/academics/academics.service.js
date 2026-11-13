@@ -141,7 +141,7 @@ async function isFacultyAssigned(facultyId, courseId) {
 
 async function assertFacultyAssigned(facultyId, courseId) {
   if (!(await isFacultyAssigned(facultyId, courseId))) {
-    throw new ForbiddenError('You are not assigned to this course');
+    throw new ForbiddenError('You are not assigned to this course. Ask your administrator to assign you, then try again.');
   }
 }
 

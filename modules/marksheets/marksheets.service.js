@@ -51,7 +51,7 @@ async function getSheet(examId, { facultyId = null, departmentId = null } = {}) 
   const exam = await examContext(examId);
   if (facultyId) await academics.assertFacultyAssigned(facultyId, exam.course_id);
   if (departmentId && Number(departmentId) !== Number(exam.department_id)) {
-    throw new ForbiddenError('This examination belongs to another department');
+    throw new ForbiddenError('This examination belongs to another department. You can only view marksheets for your own department.');
   }
   const { rows: students } = await query(
     `SELECT s.id, s.student_code, s.full_name, s.is_active,

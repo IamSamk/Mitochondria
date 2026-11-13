@@ -62,7 +62,7 @@ async function clearLock(paperId, user, ip) {
   const paper = await getPaper(paperId);
   const ctx = await userContext(user.id);
   const canClear = ctx.role === 'ADMIN' || Number(paper.created_by) === Number(user.id);
-  if (!canClear) throw new ForbiddenError('Only the paper owner or an administrator can clear a download freeze');
+  if (!canClear) throw new ForbiddenError('Only the paper owner or an administrator can clear a download freeze. Ask the paper owner to clear it.');
   await withTransaction(async (db) => {
     await db.query('DELETE FROM paper_download_locks WHERE paper_id=$1', [paperId]);
     await logAudit({ actorId: user.id, action: 'PAPER_DOWNLOAD_LOCK_CLEARED', entityType: 'question_paper',
@@ -86,7 +86,7 @@ async function setDownloadPassword(paperId, user, password, ip) {
   const paper = await getPaper(paperId);
   const ctx = await userContext(user.id);
   const canSet = ctx.role === 'ADMIN' || Number(paper.created_by) === Number(user.id);
-  if (!canSet) throw new ForbiddenError('Only the paper owner or an administrator can set a download password');
+  if (!canSet) throw new ForbiddenError('Only the paper owner or an administrator can set a download password.');
   const clean = String(password || '').trim();
   if (clean && clean.length < 6) throw new ValidationError('The download password must be at least 6 characters');
   const hash = clean ? await bcrypt.hash(clean, 10) : null;
@@ -158,7 +158,7 @@ async function requestDownload(versionId, user, { password = '' } = {}, ip = nul
     allowed = true;
   }
 
-  if (!allowed) throw new ForbiddenError('You do not have access to this paper');
+  if (!allowed) throw new ForbiddenError('You do not have access to this paper. Ask the subject teacher for access.');
   const { detail, absPath } = await papers.ensureVersionPdf(versionId);
   return { detail, absPath };
 }
@@ -173,7 +173,7 @@ async function assertCommentAccess(paperId, user) {
   const allowed = role === 'ADMIN' || owner ||
     ((role === 'SUBJECT_HEAD' || role === 'DEPARTMENT_HEAD') && sameDepartment) ||
     role === 'REVIEWER' || role === 'CONTROLLER';
-  if (!allowed) throw new ForbiddenError('You cannot comment on this paper');
+  if (!allowed) throw new ForbiddenError('You cannot comment on this paper. Only staff involved with this paper can comment.');
   return paper;
 }
 

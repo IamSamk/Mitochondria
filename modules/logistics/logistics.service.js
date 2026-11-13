@@ -20,7 +20,7 @@ async function examContext(examId) {
 async function assertAccess(exam, { facultyId = null, departmentId = null }) {
   if (facultyId) await academics.assertFacultyAssigned(facultyId, exam.course_id);
   if (departmentId && Number(departmentId) !== Number(exam.department_id)) {
-    throw new ForbiddenError('This examination belongs to another department');
+    throw new ForbiddenError('This examination belongs to another department. You can only manage logistics for your own department.');
   }
 }
 

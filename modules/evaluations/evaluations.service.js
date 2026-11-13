@@ -100,7 +100,7 @@ async function getEvaluationById(id) {
 
 async function assertEvaluator(evaluation, facultyId) {
   if (Number(evaluation.evaluator_id) !== Number(facultyId)) {
-    throw new ForbiddenError('This script is allocated to another faculty member');
+    throw new ForbiddenError('This script is allocated to another faculty member. Ask the controller to reassign it if needed.');
   }
 }
 
@@ -175,7 +175,7 @@ async function startEvaluation(scriptId, facultyId, ip) {
     const allocation = (await db.query(
       `SELECT sa.id FROM script_allocations sa
         WHERE sa.script_id = $1 AND sa.faculty_id = $2 AND sa.is_current`, [scriptId, facultyId])).rows[0];
-    if (!allocation) throw new ForbiddenError('This script is not allocated to you');
+    if (!allocation) throw new ForbiddenError('This script is not allocated to you. Ask the controller to allocate it.');
 
     const script = (await db.query(
       `SELECT s.*, e.status AS exam_status FROM answer_scripts s

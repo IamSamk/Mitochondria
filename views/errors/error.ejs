@@ -1,7 +1,24 @@
 <%- include('../partials/header') %>
-<div class="text-center py-5">
-  <h1 class="display-4"><%= status %></h1>
-  <p class="lead"><%= message %></p>
-  <a class="btn btn-primary" href="/dashboard">Back to dashboard</a>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <div class="display-1 text-muted mb-3" aria-hidden="true">
+            <% if (status === 403) { %>🔒<% } else if (status === 404) { %>🔍<% } else if (status === 422) { %>⚠️<% } else { %>⛔<% } %>
+          </div>
+          <h1 class="h3 mb-2"><%= status === 403 ? 'Access denied' : status === 404 ? 'Not found' : status === 422 ? 'Invalid input' : 'Something went wrong' %></h1>
+          <p class="text-muted mb-4"><%= message %></p>
+          <% if (status === 403) { %>
+            <p class="small text-muted mb-4">If you believe you should have access, contact your administrator or the person who owns this resource.</p>
+          <% } %>
+          <div class="d-flex gap-2 justify-content-center">
+            <a class="btn btn-primary" href="/dashboard">Back to dashboard</a>
+            <button class="btn btn-outline-secondary" type="button" onclick="history.back()">Go back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <%- include('../partials/footer') %>

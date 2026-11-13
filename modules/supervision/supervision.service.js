@@ -18,7 +18,7 @@ async function userDepartmentId(userId) {
 async function assertPaperInDepartment(paperId, departmentId) {
   const paper = await paperCollab.getPaper(paperId);
   if (Number(paper.department_id) !== Number(departmentId)) {
-    throw new ForbiddenError('This paper belongs to another department');
+    throw new ForbiddenError('This paper belongs to another department. Head access is limited to your department.');
   }
   return paper;
 }
