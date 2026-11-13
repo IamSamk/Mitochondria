@@ -28,7 +28,8 @@ async function listResults({ examId = '', courseId = '', q = '' } = {}) {
   }
   const { rows } = await query(
     `${RESULT_SELECT}${where.length ? ` AND ${where.join(' AND ')}` : ''}
-      ORDER BY e.exam_date DESC, e.name, st.student_code`, params);
+      ORDER BY e.exam_date DESC, e.name, st.student_code
+      LIMIT 500`, params);
   return rows;
 }
 

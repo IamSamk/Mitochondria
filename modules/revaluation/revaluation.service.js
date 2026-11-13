@@ -41,7 +41,8 @@ async function listRequestsForReview({ examId = '', status = '' } = {}) {
        JOIN students s ON s.id = r.student_id
        JOIN examinations e ON e.id = r.exam_id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-      ORDER BY r.created_at DESC`, params);
+      ORDER BY r.created_at DESC
+      LIMIT 500`, params);
   return rows;
 }
 

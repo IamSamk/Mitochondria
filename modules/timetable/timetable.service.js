@@ -1,6 +1,7 @@
 const { query, withTransaction } = require('../../config/database');
 const { ValidationError, NotFoundError } = require('../../config/errors');
 const { logAudit } = require('../audit/audit.service');
+const { solveTimetable } = require('../algorithms/placement');
 
 // Conflict graph: two exams conflict if they share a student (via answer_scripts or exam_marks).
 async function buildConflictGraph(examIds) {
@@ -23,23 +24,6 @@ async function buildConflictGraph(examIds) {
     [examIds]);
   mrows.forEach((r) => { conflicts[r.e1].add(r.e2); conflicts[r.e2].add(r.e1); });
   return conflicts;
-}
-
-function solveTimetable(exams, conflicts) {
-  const adj = {};
-  exams.forEach((e) => { adj[e.id] = new Set(conflicts[e.id] || []); });
-  const order = exams.map((e) => e.id).sort((a, b) => adj[b].size - adj[a].size);
-  const color = {};
-  let maxColor = 0;
-  for (const id of order) {
-    const used = new Set();
-    for (const nb of adj[id]) if (color[nb] !== undefined) used.add(color[nb]);
-    let c = 0;
-    while (used.has(c)) c += 1;
-    color[id] = c;
-    if (c + 1 > maxColor) maxColor = c + 1;
-  }
-  return { color, slots: maxColor };
 }
 
 async function solveForExams(examIds) {

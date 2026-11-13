@@ -54,7 +54,8 @@ async function listEvaluations({ status = '', examId = '', q = '', evaluatorId =
   const { rows } = await query(
     `${EVALUATION_SELECT}
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY ev.updated_at DESC, ev.id DESC`, params);
+      ORDER BY ev.updated_at DESC, ev.id DESC
+      LIMIT 500`, params);
   return rows;
 }
 

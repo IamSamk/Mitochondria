@@ -16,7 +16,8 @@ async function listContributions({ courseId = '', status = '', topic = '' } = {}
        JOIN users u ON u.id = c.author_id
        JOIN courses co ON co.id = c.course_id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-      ORDER BY c.created_at DESC`, params);
+      ORDER BY c.created_at DESC
+      LIMIT 500`, params);
   return rows;
 }
 
@@ -221,27 +222,6 @@ async function materializeToPaper(assemblyId, userId, ip) {
   });
 }
 
-// Timetable conflict solver (greedy graph coloring)
-function solveTimetable(exams, conflicts) {
-  // exams: [{id}], conflicts: Map examId -> Set of conflicting examIds
-  // Returns {slot: Map examId->slotNumber, slots: number}
-  const adj = {};
-  exams.forEach((e) => { adj[e.id] = new Set(conflicts[e.id] || []); });
-  // order by degree desc
-  const order = exams.map((e) => e.id).sort((a, b) => adj[b].size - adj[a].size);
-  const color = {};
-  let maxColor = 0;
-  for (const id of order) {
-    const used = new Set();
-    for (const nb of adj[id]) if (color[nb] !== undefined) used.add(color[nb]);
-    let c = 0;
-    while (used.has(c)) c += 1;
-    color[id] = c;
-    if (c + 1 > maxColor) maxColor = c + 1;
-  }
-  return { color, slots: maxColor };
-}
-
 async function listExamSlots(examId) {
   const { rows } = await query('SELECT * FROM exam_slots WHERE exam_id=$1 ORDER BY slot_start', [examId]);
   return rows;
@@ -261,5 +241,5 @@ async function createExamSlot({ examId, slotStart, slotEnd, venue }, userId, ip)
 module.exports = {
   listContributions, createContribution, reviewContribution, setContributionStatus,
   createAssembly, getAssembly, autoAssemble, materializeToPaper,
-  solveTimetable, listExamSlots, createExamSlot
+  listExamSlots, createExamSlot
 };

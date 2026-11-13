@@ -3,88 +3,7 @@ const { ValidationError, NotFoundError, ForbiddenError } = require('../../config
 const { logAudit } = require('../audit/audit.service');
 const academics = require('../academics/academics.service');
 const logistics = require('../logistics/logistics.service');
-
-const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-
-function optimalPlacement(students, rooms) {
-  // students: [{id, group}], rooms: [{number, rows, cols}]
-  const groups = {};
-  students.forEach((s) => { (groups[s.group] = groups[s.group] || []).push(s.id); });
-  const groupKeys = Object.keys(groups);
-  const state = rooms.map((r) => ({
-    number: r.number, rows: r.rows, cols: r.cols,
-    grid: Array.from({ length: r.rows }, () => Array(r.cols).fill(null)),
-    occupied: 0, capacity: r.rows * r.cols
-  }));
-  const placement = [];
-  let remaining = students.length;
-  let progress = true;
-  while (remaining > 0 && progress) {
-    progress = false;
-    const activeGroups = groupKeys.filter((g) => groups[g].length > 0);
-    if (!activeGroups.length) break;
-    activeGroups.sort((a, b) => groups[b].length - groups[a].length);
-    const gk = activeGroups[0];
-    // try to place one student of gk
-    let placed = false;
-    for (const room of state) {
-      if (room.occupied >= room.capacity) continue;
-      let best = null; let bestScore = Infinity;
-      for (let r = 0; r < room.rows; r++) {
-        for (let c = 0; c < room.cols; c++) {
-          if (room.grid[r][c]) continue;
-          let score = 0;
-          for (const [dr, dc] of DIRS) {
-            const nr = r + dr, nc = c + dc;
-            if (nr < 0 || nc < 0 || nr >= room.rows || nc >= room.cols) continue;
-            const v = room.grid[nr][nc];
-            if (v && v.group === gk) score += 1;
-          }
-          if (score < bestScore) { bestScore = score; best = { r, c }; }
-        }
-      }
-      if (best) {
-        const sid = groups[gk].shift();
-        room.grid[best.r][best.c] = { studentId: sid, group: gk };
-        room.occupied += 1;
-        placement.push({ studentId: sid, roomNumber: room.number, row: best.r, col: best.c });
-        remaining -= 1;
-        placed = true;
-        progress = true;
-        break;
-      }
-    }
-    if (!placed) {
-      // fallback: place any remaining student in any free cell
-      let anyPlaced = false;
-      for (const g of activeGroups) {
-        if (!groups[g].length) continue;
-        for (const room of state) {
-          if (room.occupied >= room.capacity) continue;
-          let cell = null;
-          outer: for (let r = 0; r < room.rows; r++) {
-            for (let c = 0; c < room.cols; c++) {
-              if (!room.grid[r][c]) { cell = { r, c }; break outer; }
-            }
-          }
-          if (cell) {
-            const sid = groups[g].shift();
-            room.grid[cell.r][cell.c] = { studentId: sid, group: g };
-            room.occupied += 1;
-            placement.push({ studentId: sid, roomNumber: room.number, row: cell.r, col: cell.c });
-            remaining -= 1;
-            anyPlaced = true;
-            progress = true;
-            break;
-          }
-        }
-        if (anyPlaced) break;
-      }
-      if (!anyPlaced) break;
-    }
-  }
-  return { placement, unplaced: remaining };
-}
+const { optimalPlacement } = require('../algorithms/placement');
 
 // Templates
 async function listTemplates(userId) {
@@ -171,6 +90,6 @@ async function generateFromTemplates(examId, userId, ip) {
 }
 
 module.exports = {
-  DIRS, optimalPlacement, listTemplates, createTemplate, deleteTemplate,
+  listTemplates, createTemplate, deleteTemplate,
   addRoomInstance, listRoomInstances, generateFromTemplates
 };

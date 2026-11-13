@@ -27,7 +27,8 @@ async function listStudents({ q = '', departmentId = '', active = '' } = {}) {
   const { rows } = await query(
     `${STUDENT_SELECT}
      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-     ORDER BY s.student_code`, params);
+     ORDER BY s.student_code
+     LIMIT 500`, params);
   return rows;
 }
 

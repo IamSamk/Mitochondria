@@ -45,7 +45,8 @@ async function listScripts({ examId = '', status = '', q = '' } = {}) {
   const { rows } = await query(
     `${SCRIPT_SELECT}
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY e.exam_date DESC, st.student_code`, params);
+      ORDER BY e.exam_date DESC, st.student_code
+      LIMIT 500`, params);
   return rows;
 }
 

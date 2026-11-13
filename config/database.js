@@ -38,8 +38,24 @@ if (isConfigured) {
   pool = { query: notConfigured, connect: notConfigured, end: () => Promise.resolve(), on: () => {} };
 }
 
-/** Run a single parameterized query. */
-const query = (text, params) => pool.query(text, params);
+/** Run a single parameterized query, logging slow/failed queries without params (which may hold PII). */
+const SLOW_QUERY_MS = Number(process.env.SLOW_QUERY_MS || 250);
+const query = async (text, params) => {
+  const started = Date.now();
+  try {
+    const result = await pool.query(text, params);
+    const ms = Date.now() - started;
+    if (ms >= SLOW_QUERY_MS && process.env.NODE_ENV !== 'test') {
+      console.warn(`Slow query (${ms}ms): ${String(text).replace(/\s+/g, ' ').slice(0, 200)}`);
+    }
+    return result;
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error(`Query failed after ${Date.now() - started}ms: ${String(text).replace(/\s+/g, ' ').slice(0, 200)}`);
+    }
+    throw err;
+  }
+};
 
 /** Run fn(client) inside a transaction; commits on success, rolls back on error. */
 async function withTransaction(fn) {
