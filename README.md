@@ -46,15 +46,29 @@ pnpm db:seed        # roles + synthetic demo data
 pnpm dev            # http://localhost:3000
 pnpm test           # rebuilds emp_test, runs Jest + Supertest
 ```
-`pnpm db:reset` drops and recreates the dev schema (never in production).
+## Local data (development)
 
-## Deploying to Vercel
-1. Create a hosted Postgres database (Neon via Vercel Marketplace, or Supabase) and copy its connection string.
+Locally we use a Docker Postgres container (`emp-postgres`) on port 5432 with two databases:
+- `emp` — development database (DATABASE_URL)
+- `emp_test` — test database, rebuilt from migrations + seed on every `pnpm test` (TEST_DATABASE_URL)
+
+Credentials: user `emp`, password `emp_dev_password`. Demo data comes from `scripts/seed.js` (roles + synthetic accounts, courses, students). The `scripts/seed-demo.js` script injects a richer, realistic demo dataset (exam, questions, notification, announcement) for showcasing.
+
+## Deploying to Vercel / Supabase
+
+1. Create a hosted Postgres database (Supabase, Neon via Vercel Marketplace, or similar) and copy its connection string.
+   - For Supabase, prefer the **Session pooler** (port 5432) or direct connection; the transaction pooler (port 6543) can break prepared statements.
 2. In Vercel → Project → Settings → Environment Variables add:
-   - `DATABASE_URL` – the connection string (Supabase: use the pooler URI)
-   - `SESSION_SECRET` – a long random value
-   - `SEED_DEMO_DATA=true` – optional, creates the demo accounts below
+   - `DATABASE_URL` — the connection string
+   - `SESSION_SECRET` — a long random value
+   - `CSRF_SECRET` — a long random value
+   - `SEED_DEMO_DATA=true` — optional, creates the demo accounts during the build
 3. Redeploy. The build (`pnpm build`) applies pending migrations and seeds roles automatically.
+
+To inject a full, realistic demo dataset into a hosted database (Supabase/Neon) after deploy:
+```powershell
+$env:DATABASE_URL="<hosted url>"; $env:NODE_ENV="production"; pnpm db:seed:demo
+```
 
 If a variable is missing, the site shows a "Server is not configured yet" page instead of crashing.
 

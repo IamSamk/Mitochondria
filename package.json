@@ -10,6 +10,7 @@
     "build": "node scripts/vercel-build.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
+    "db:seed:demo": "node scripts/seed-demo.js",
     "db:reset": "node scripts/migrate.js --reset && node scripts/seed.js",
     "test": "cross-env NODE_ENV=test jest --runInBand"
   },
