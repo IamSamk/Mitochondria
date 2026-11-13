@@ -186,13 +186,13 @@ async function materializeToPaper(assemblyId, userId, ip) {
       let qid = existing ? existing.id : null;
       if (!qid) {
         const { rows } = await db.query(
-          `INSERT INTO questions(course_id, question_type, body, marks, difficulty, answer_key, created_by, source_contribution_id)
+          `INSERT INTO questions(course_id, created_by, question_type, body, marks, difficulty, model_answer, source_contribution_id)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-          [course.id, contrib.question_type, contrib.body, contrib.marks, contrib.difficulty,
-           contrib.answer_key, userId, contrib.id]);
+          [course.id, userId, contrib.question_type, contrib.body, contrib.marks, contrib.difficulty,
+           contrib.answer_key, contrib.id]);
         qid = rows[0].id;
       }
-      questionIds.push({ qid, item });
+      questionIds.push({ qid, item, contrib });
     }
     // Create paper.
     const { rows: paperRows } = await db.query(
@@ -206,11 +206,13 @@ async function materializeToPaper(assemblyId, userId, ip) {
     const version = verRows[0];
     // Add questions.
     let pos = 1;
-    for (const { qid, item } of questionIds) {
+    for (const { qid, item, contrib } of questionIds) {
       await db.query(
-        `INSERT INTO paper_questions(version_id, question_id, position, section_title, marks)
-         VALUES ($1,$2,$3,$4,$5)`,
-        [version.id, qid, pos++, item.section_title || 'Section A', item.marks]);
+        `INSERT INTO paper_questions(version_id, source_question_id, section_title, display_no, position, question_type, body, marks)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [version.id, qid, item.section_title || 'Section A', String(pos), pos,
+         contrib.question_type, contrib.body, item.marks]);
+      pos += 1;
     }
     await db.query(
       `UPDATE paper_versions SET total_marks=(SELECT coalesce(sum(marks),0) FROM paper_questions WHERE version_id=$1) WHERE id=$1`,
