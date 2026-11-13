@@ -15,6 +15,27 @@ const ROLES = [
 ];
 
 const DEMO_PASSWORD = 'Demo@12345'; // synthetic demo accounts only
+const DEMO_STUDENT_COUNT = 10;
+const DEMO_COURSE_CREDITS = 4;
+const DEMO_COURSES = [
+  ['CS101', 'Data Structures', DEMO_COURSE_CREDITS],
+  ['CS102', 'Database Systems', DEMO_COURSE_CREDITS]
+];
+const DEMO_STUDENT_LINK_CODE = 'S2026001';
+const LINKED_STUDENT_EMAIL = 'student1@college.test';
+
+const DEMO_USER_SEEDS = [
+  ['admin@college.test', 'Demo Admin', 1],
+  ['controller@college.test', 'Demo Controller', 2],
+  ['faculty1@college.test', 'Demo Faculty One', 3],
+  ['faculty2@college.test', 'Demo Faculty Two', 3],
+  ['reviewer@college.test', 'Demo Reviewer', 4],
+  ['printing@college.test', 'Demo Printing Coordinator', 5],
+  ['verifier@college.test', 'Demo Marks Verifier', 6],
+  ['subjecthead@college.test', 'Demo Subject Head', 7],
+  ['depthead@college.test', 'Demo Department Head', 8],
+  [LINKED_STUDENT_EMAIL, 'Demo Student One', 9]
+];
 
 async function seed({ demo = true } = {}) {
   for (const [id, code, name, description] of ROLES) {
@@ -30,46 +51,35 @@ async function seed({ demo = true } = {}) {
     `INSERT INTO departments(code, name) VALUES ('CSE','Computer Science and Engineering')
      ON CONFLICT (code) DO UPDATE SET name=EXCLUDED.name RETURNING id`)).rows[0].id;
 
-  const users = [
-    ['admin@college.test', 'Demo Admin', 1],
-    ['controller@college.test', 'Demo Controller', 2],
-    ['faculty1@college.test', 'Demo Faculty One', 3],
-    ['faculty2@college.test', 'Demo Faculty Two', 3],
-    ['reviewer@college.test', 'Demo Reviewer', 4],
-    ['printing@college.test', 'Demo Printing Coordinator', 5],
-    ['verifier@college.test', 'Demo Marks Verifier', 6],
-    ['subjecthead@college.test', 'Demo Subject Head', 7],
-    ['depthead@college.test', 'Demo Department Head', 8],
-    ['student1@college.test', 'Demo Student One', 9]
-  ];
   const ids = {};
-  for (const [email, name, role] of users) {
+  for (const [email, name, role] of DEMO_USER_SEEDS) {
     ids[email] = (await pool.query(
       `INSERT INTO users(email, full_name, password_hash, role_id, department_id) VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (email) DO UPDATE SET full_name=EXCLUDED.full_name RETURNING id`,
       [email, name, hash, role, dept])).rows[0].id;
   }
 
-  const courses = [['CS101', 'Data Structures'], ['CS102', 'Database Systems']];
   const courseIds = [];
-  for (const [code, title] of courses) {
+  for (const [code, title, credits] of DEMO_COURSES) {
     courseIds.push((await pool.query(
-      `INSERT INTO courses(department_id, code, title, credits) VALUES ($1,$2,$3,4)
-       ON CONFLICT (code) DO UPDATE SET title=EXCLUDED.title RETURNING id`, [dept, code, title])).rows[0].id);
+      `INSERT INTO courses(department_id, code, title, credits) VALUES ($1,$2,$3,$4)
+       ON CONFLICT (code) DO UPDATE SET title=EXCLUDED.title RETURNING id`,
+      [dept, code, title, credits])).rows[0].id);
   }
   await pool.query(`INSERT INTO faculty_courses(faculty_id, course_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
     [ids['faculty1@college.test'], courseIds[0]]);
   await pool.query(`INSERT INTO faculty_courses(faculty_id, course_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
     [ids['faculty2@college.test'], courseIds[1]]);
 
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= DEMO_STUDENT_COUNT; i++) {
+    const code = `S2026${String(i).padStart(3, '0')}`;
     await pool.query(
       `INSERT INTO students(student_code, full_name, department_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-      [`S2026${String(i).padStart(3, '0')}`, `Synthetic Student ${i}`, dept]);
+      [code, `Synthetic Student ${i}`, dept]);
   }
   await pool.query(
-    `UPDATE students SET user_id=$1, email=$2 WHERE student_code='S2026001'`,
-    [ids['student1@college.test'], 'student1@college.test']);
+    `UPDATE students SET user_id=$1, email=$2 WHERE student_code=$3`,
+    [ids[LINKED_STUDENT_EMAIL], LINKED_STUDENT_EMAIL, DEMO_STUDENT_LINK_CODE]);
 }
 
 module.exports = { seed, ROLES, DEMO_PASSWORD };

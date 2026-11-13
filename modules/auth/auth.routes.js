@@ -7,9 +7,12 @@ const { requireAuth } = require('../../middleware/auth.middleware');
 
 const router = express.Router();
 
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_MAX = process.env.NODE_ENV === 'test' ? 1000 : 10;
+
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: process.env.NODE_ENV === 'test' ? 1000 : 10,
+  windowMs: LOGIN_RATE_LIMIT_WINDOW_MS,
+  limit: LOGIN_RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => res.status(429).render('auth/login', { error: 'Too many login attempts. Try again later.' })
